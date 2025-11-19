@@ -85,10 +85,10 @@ export const theme = extendTheme({
       },
       '.file-upload-area': {
         textAlign: 'center',
-        padding: '20px',
+        padding: '10px',
       },
       '.file-upload-area p': {
-        margin: '0 0 0 0',
+        margin: '0 0 10px 0',
         color: 'var(--muted)',
       },
       '.file-label': {
