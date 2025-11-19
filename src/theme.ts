@@ -76,7 +76,7 @@ export const theme = extendTheme({
         padding: '16px 18px',
         display: 'grid',
         gap: '14px',
-        maxWidth: 'min(92vw, 560px)',
+        maxWidth: 'min(84vw, 560px)',
       },
       '#hudTopLeft h1': {
         margin: 0,
@@ -155,7 +155,7 @@ export const theme = extendTheme({
         left: '16px',
         bottom: '16px',
         padding: '12px 14px',
-        width: 'min(92vw, 520px)',
+        width: 'min(84vw, 520px)',
         display: 'none',
       },
       '#infoBox h2': {
