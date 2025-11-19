@@ -36,7 +36,14 @@ export const TopLeftPanel = ({
 
   return (
     <Box id="hudTopLeft" className="overlay hud-card" aria-live="polite">
-      <Heading as="h1">トピックマップを広げる</Heading>
+      <Heading
+        as="h1"
+        bgGradient="linear(110deg, rgba(14,165,233,0.95), rgba(59,130,246,0.95), rgba(14,165,233,0.8))"
+        bgClip="text"
+        fontWeight="extrabold"
+      >
+        トピックマップを広げる
+      </Heading>
       {!hasData && (
         <>
           <Box id="upload-container" className="file-upload-area">
