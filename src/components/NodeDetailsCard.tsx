@@ -12,7 +12,7 @@ export const NodeDetailsCard = ({ isVisible, details, placeholder, hasGlowingNod
     id="hudBottomLeft"
     className="overlay hud-card"
     style={{ display: isVisible ? 'block' : 'none' }}
-    left={{ base: "0", md: "16px" }}
+    left={{ base: "8px", md: "16px" }}
   >
     <Box id="infoBox">
       <Text as="h2">{hasGlowingNodes ? '次のステップ：' : '詳細'}</Text>
