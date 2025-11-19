@@ -269,7 +269,7 @@ function App() {
           handleRandomOpenArticle()
         }}
       />
-      <FooterBadge />
+      <FooterBadge hasData={hasData} />
     </Box>
   )
 }
