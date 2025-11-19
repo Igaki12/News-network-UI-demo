@@ -84,12 +84,13 @@ export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle }: Pr
               id="random-open-article-btn"
               className="btn-primary"
               type="button"
+              height="auto"
               onClick={() => {
                 onClose()
                 onOpenArticle()
               }}
             >
-              どんなニュース記事なのか確認する
+              どんなニュース記事なのか確認する（クイズを中断する）
             </Button>
           </Box>
         </Box>
