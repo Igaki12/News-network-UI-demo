@@ -28,6 +28,7 @@ type RandomState = {
 }
 
 const fmt = new Intl.NumberFormat('ja-JP')
+const SAMPLE_FILE_PATH = `${import.meta.env.BASE_URL}news_full_mcq3_type9_entities_novectors.jsonl`
 
 function App() {
   const [allArticles, setAllArticles] = useState<Article[]>([])
@@ -41,6 +42,7 @@ function App() {
   const [completedNodes, setCompletedNodes] = useState<Set<string>>(new Set())
   const [randomState, setRandomState] = useState<RandomState | null>(null)
   const [isRandomModalOpen, setRandomModalOpen] = useState(false)
+  const [isLoadingData, setIsLoadingData] = useState(false)
 
   const hasData = availableDates.length > 0
   const currentDate = hasData && currentDateIndex >= 0 ? availableDates[currentDateIndex] : null
@@ -57,17 +59,11 @@ function App() {
     setNodeMeta(nodeMeta)
   }, [articlesByDate, currentDate])
 
-  const handleFileSelected = useCallback(async (file: File) => {
-    const text = await file.text()
-    const parsed = parseJsonlArticles(text)
-    if (parsed.length === 0) {
-      window.alert('有効なデータが含まれるJSONLファイルではありません。date_id, named_entities, contentが必要です。')
-      return
-    }
+  const applyParsedArticles = useCallback((parsed: Article[]) => {
     const { byDate, dates } = groupArticlesByDate(parsed)
     if (dates.length === 0) {
       window.alert('有効な日付のデータが見つかりませんでした。')
-      return
+      return false
     }
     setAllArticles(parsed)
     setArticlesByDate(byDate)
@@ -76,7 +72,50 @@ function App() {
     setCompletedNodes(new Set())
     setDetails([])
     setArticleModalData(null)
+    return true
   }, [])
+
+  const loadArticlesFromText = useCallback(
+    (text: string) => {
+      const parsed = parseJsonlArticles(text)
+      if (parsed.length === 0) {
+        window.alert('有効なデータが含まれるJSONLファイルではありません。date_id, named_entities, contentが必要です。')
+        return false
+      }
+      return applyParsedArticles(parsed)
+    },
+    [applyParsedArticles],
+  )
+
+  const handleFileSelected = useCallback(
+    async (file: File) => {
+      setIsLoadingData(true)
+      try {
+        const text = await file.text()
+        loadArticlesFromText(text)
+      } finally {
+        setIsLoadingData(false)
+      }
+    },
+    [loadArticlesFromText],
+  )
+
+  const handleUseProvidedFile = useCallback(async () => {
+    setIsLoadingData(true)
+    try {
+      const response = await fetch(SAMPLE_FILE_PATH)
+      if (!response.ok) {
+        throw new Error('failed to load sample file')
+      }
+      const text = await response.text()
+      loadArticlesFromText(text)
+    } catch (err) {
+      console.error(err)
+      window.alert('用意されているファイルを読み込めませんでした。時間をおいてから再度お試しください。')
+    } finally {
+      setIsLoadingData(false)
+    }
+  }, [loadArticlesFromText])
 
   const getArticlesForNode = useCallback(
     (nodeId: string) =>
@@ -197,6 +236,8 @@ function App() {
         disablePrev={!hasData || currentDateIndex === 0}
         disableNext={!hasData || currentDateIndex === availableDates.length - 1}
         onRandomQuestion={handleRandomQuestion}
+        onUseProvidedFile={handleUseProvidedFile}
+        isLoading={isLoadingData}
       />
       <NodeDetailsCard isVisible={hasData} details={details} />
       <ArticleModal

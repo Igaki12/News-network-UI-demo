@@ -10,6 +10,8 @@ type Props = {
   disablePrev: boolean
   disableNext: boolean
   onRandomQuestion: () => void
+  onUseProvidedFile: () => void
+  isLoading: boolean
 }
 
 export const TopLeftPanel = ({
@@ -21,6 +23,8 @@ export const TopLeftPanel = ({
   disablePrev,
   disableNext,
   onRandomQuestion,
+  onUseProvidedFile,
+  isLoading,
 }: Props) => {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -42,6 +46,15 @@ export const TopLeftPanel = ({
             <input type="file" accept=".jsonl" onChange={handleFileChange} />
             📁 ファイルを選択
           </label>
+          <Button
+            mt="16px"
+            type="button"
+            className="btn-primary"
+            onClick={onUseProvidedFile}
+            isDisabled={isLoading}
+          >
+            用意されているファイルを使用する
+          </Button>
         </Box>
       )}
 
