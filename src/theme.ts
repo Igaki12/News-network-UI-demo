@@ -72,7 +72,7 @@ export const theme = extendTheme({
       },
       '#hudTopLeft': {
         top: '16px',
-        left: '16px',
+        // left: '16px',
         padding: '16px 18px',
         display: 'grid',
         gap: '14px',
@@ -159,7 +159,7 @@ export const theme = extendTheme({
         boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3)',
       },
       '#hudBottomLeft': {
-        left: '16px',
+        // left: '16px',
         bottom: '16px',
         padding: '12px 14px',
         width: 'min(84vw, 520px)',
@@ -196,6 +196,10 @@ export const theme = extendTheme({
       '.btn-primary:hover': {
         transform: 'translateY(-1px)',
         boxShadow: '0 18px 40px rgba(14, 165, 233, 0.4)',
+      },
+      '.btn-primary:pushed': {
+        transform: 'translateY(1px)',
+        boxShadow: '0 8px 20px rgba(14, 165, 233, 0.2)',
       },
       '.choice-grid': {
         display: 'grid',
