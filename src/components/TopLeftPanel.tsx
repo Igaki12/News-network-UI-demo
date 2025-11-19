@@ -43,7 +43,7 @@ export const TopLeftPanel = ({
         bgClip="text"
         fontWeight="extrabold"
       >
-        ニュースの「地図」を広げる
+        ニュースの地図を広げる
       </Heading>
       {!hasData && (
         <>
