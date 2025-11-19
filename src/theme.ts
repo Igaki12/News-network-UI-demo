@@ -88,7 +88,7 @@ export const theme = extendTheme({
         padding: '20px',
       },
       '.file-upload-area p': {
-        margin: '0 0 10px 0',
+        margin: '0 0 0 0',
         color: 'var(--muted)',
       },
       '.file-label': {
