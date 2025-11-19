@@ -1,3 +1,4 @@
+import { PlusSquareIcon } from '@chakra-ui/icons'
 import { Box, Button, Heading, Text } from '@chakra-ui/react'
 import type { ChangeEvent } from 'react'
 
@@ -35,7 +36,7 @@ export const TopLeftPanel = ({
   }
 
   return (
-    <Box id="hudTopLeft" className="overlay hud-card" aria-live="polite">
+    <Box id="hudTopLeft" className="overlay hud-card" aria-live="polite" mr={{ base: '16px', md: undefined }}>
       <Heading
         as="h1"
         bgGradient="linear(110deg, rgba(14,165,233,0.95), rgba(59,130,246,0.95), rgba(14,165,233,0.8))"
@@ -52,7 +53,8 @@ export const TopLeftPanel = ({
             </Text>
             <label className="file-label">
               <input type="file" accept=".jsonl" onChange={handleFileChange} />
-              📁 ファイルを選択
+              <PlusSquareIcon boxSize="20px" aria-hidden="true" />
+              <span>ファイルを選択</span>
             </label>
             <Text>または</Text>
             <Button
