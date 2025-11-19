@@ -1,3 +1,4 @@
+import { CheckIcon, WarningTwoIcon } from '@chakra-ui/icons'
 import { Box, Button, Heading, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Article, QuizChoice, QuizQuestion } from '../types'
@@ -25,7 +26,7 @@ export const ArticleModal = ({ isOpen, nodeId, article, relatedArticles, onClose
   const [choiceStatus, setChoiceStatus] = useState<Record<string, 'correct' | 'incorrect'>>({})
   const [feedback, setFeedback] = useState<string | null>(null)
   const [isArticleVisibleInQuiz, setArticleVisibleInQuiz] = useState(false)
-  const [resultMessage, setResultMessage] = useState<{ icon: string; text: string } | null>(null)
+  const [resultMessage, setResultMessage] = useState<{ status: 'success' | 'warning'; text: string } | null>(null)
 
   const resetQuiz = useCallback(() => {
     setQuizQuestions([])
@@ -118,7 +119,7 @@ export const ArticleModal = ({ isOpen, nodeId, article, relatedArticles, onClose
       } else {
         setQuizIndex(currentIndex + 1)
       }
-    }, 1400)
+    }, 5000)
   }
 
   const finishQuiz = (forceSuccess = false) => {
@@ -129,13 +130,13 @@ export const ArticleModal = ({ isOpen, nodeId, article, relatedArticles, onClose
     const success = forceSuccess || quizGood >= quizBad
     setView('result')
     if (success) {
-      setResultMessage({ icon: '🎉', text: '素晴らしい！他のテーマにも挑戦してみよう' })
+      setResultMessage({ status: 'success', text: '素晴らしい！他のテーマにも挑戦してみよう' })
       onQuizSuccess(nodeId)
       setTimeout(() => {
         onClose()
       }, 2000)
     } else {
-      setResultMessage({ icon: '🤔', text: 'もう少しです！別の記事で再挑戦しましょう。' })
+      setResultMessage({ status: 'warning', text: 'もう少しです！別の記事で再挑戦しましょう。' })
       setTimeout(() => {
         const alternative = pickFeaturedArticle(relatedArticles, currentArticle?.news_item_id ?? null)
         if (alternative) {
@@ -244,9 +245,17 @@ export const ArticleModal = ({ isOpen, nodeId, article, relatedArticles, onClose
 
           {view === 'result' && resultMessage && (
             <Box id="quiz-result">
-              <Box className="result-animation">
-                <div id="result-icon">{resultMessage.icon}</div>
-                <Text id="result-text">{resultMessage.text}</Text>
+              <Box className="result-animation" display="flex" flexDirection="column" alignItems="center" gap={4}>
+                <Box id="result-icon" display="flex" alignItems="center" justifyContent="center">
+                  {resultMessage.status === 'success' ? (
+                    <CheckIcon boxSize="56px" color="green.400" />
+                  ) : (
+                    <WarningTwoIcon boxSize="56px" color="orange.300" />
+                  )}
+                </Box>
+                <Text id="result-text" textAlign="center">
+                  {resultMessage.text}
+                </Text>
               </Box>
             </Box>
           )}

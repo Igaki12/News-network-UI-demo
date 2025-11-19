@@ -4,19 +4,20 @@ type Props = {
   isVisible: boolean
   details: string[]
   placeholder?: string
+  hasGlowingNodes?: boolean
 }
 
-export const NodeDetailsCard = ({ isVisible, details, placeholder }: Props) => (
+export const NodeDetailsCard = ({ isVisible, details, placeholder, hasGlowingNodes = false }: Props) => (
   <Box
     id="hudBottomLeft"
     className="overlay hud-card"
     style={{ display: isVisible ? 'block' : 'none' }}
   >
     <Box id="infoBox">
-      <Text as="h2">詳細</Text>
+      <Text as="h2">{hasGlowingNodes ? '次のステップ：' : '詳細'}</Text>
       {details.length === 0 && (
         <Text id="info-placeholder" className="muted">
-          {placeholder || '気になるノードをクリックしたり、引っ張ったりしてみてください'}
+          {placeholder || (hasGlowingNodes ? '光っているノードを増やしてあなたの知識を広げましょう！' : '気になるノードをクリックしたり、引っ張ったりしてみてください')}
         </Text>
       )}
       {details.length > 0 && (

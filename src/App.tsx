@@ -251,7 +251,7 @@ function App() {
         onUseProvidedFile={handleUseProvidedFile}
         isLoading={isLoadingData}
       />
-      <NodeDetailsCard isVisible={hasData} details={details} />
+      <NodeDetailsCard isVisible={hasData} details={details} hasGlowingNodes={completedNodes.size > 0} />
       <ArticleModal
         isOpen={Boolean(articleModalData)}
         nodeId={articleModalNodeId}

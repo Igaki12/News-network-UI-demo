@@ -21,7 +21,7 @@ const palette = [
 
 const scaleValue = (count: number, totalCount: number, maxCount: number) => {
   const min = 12
-  const max = 18
+  const max = 48
   if (!count || count <= 0 || !totalCount || totalCount <= 0) return min
   const ratio = Math.min(count / totalCount, 1)
   const logNormalized = maxCount > 0 ? Math.log(count + 1) / Math.log(maxCount + 1) : ratio

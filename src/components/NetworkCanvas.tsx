@@ -23,7 +23,7 @@ const networkOptions: Options = {
   nodes: {
     shape: 'dot',
     font: { multi: 'html', size: 18, strokeWidth: 3, strokeColor: 'white' },
-    scaling: { min: 15, max: 60 },
+    scaling: { min: 12, max: 40 },
     borderWidth: 2,
   },
   edges: {
