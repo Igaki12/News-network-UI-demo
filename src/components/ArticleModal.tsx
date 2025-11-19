@@ -1,5 +1,5 @@
 import { CheckIcon, WarningTwoIcon } from '@chakra-ui/icons'
-import { Box, Button, Heading, Text } from '@chakra-ui/react'
+import { Badge, Box, Button, Heading, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Article, QuizChoice, QuizQuestion } from '../types'
 import { normalizeMultipleChoiceQuestion, pickFeaturedArticle, shuffleArray } from '../utils/data'
@@ -202,9 +202,19 @@ export const ArticleModal = ({ isOpen, nodeId, article, relatedArticles, onClose
 
           {view === 'quiz' && (
             <Box id="quiz-view">
-              <Text id="quiz-progress">
+              <Badge
+                id="quiz-progress"
+                px="3"
+                py="1"
+                borderRadius="9999px"
+                bg="rgba(14,165,233,0.15)"
+                border="1px solid rgba(59,130,246,0.35)"
+                color="rgb(30, 64, 175)"
+                fontWeight="semibold"
+                letterSpacing="0.05em"
+              >
                 問題 {quizIndex + 1} / {quizQuestions.length}
-              </Text>
+              </Badge>
               <Text id="quiz-question" mt={2}>
                 {currentQuestion?.prompt}
               </Text>
