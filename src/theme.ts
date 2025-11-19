@@ -76,7 +76,7 @@ export const theme = extendTheme({
         padding: '16px 18px',
         display: 'grid',
         gap: '14px',
-        maxWidth: 'min(84vw, 560px)',
+        maxWidth: 'min(92vw, 560px)',
       },
       '#hudTopLeft h1': {
         margin: 0,
@@ -162,7 +162,7 @@ export const theme = extendTheme({
         // left: '16px',
         bottom: '16px',
         padding: '12px 14px',
-        width: 'min(84vw, 520px)',
+        width: 'min(92vw, 520px)',
         display: 'none',
       },
       '#infoBox h2': {
@@ -197,9 +197,11 @@ export const theme = extendTheme({
         transform: 'translateY(-1px)',
         boxShadow: '0 18px 40px rgba(14, 165, 233, 0.4)',
       },
-      '.btn-primary:pushed': {
-        transform: 'translateY(1px)',
-        boxShadow: '0 8px 20px rgba(14, 165, 233, 0.2)',
+      '.btn-primary:active': {
+        background: 'linear-gradient(135deg, rgba(14,165,233,1), rgba(37,99,235,1))',
+        color: '#f8fbff',
+        boxShadow: '0 12px 24px rgba(14, 165, 233, 0.35)',
+        transform: 'translateY(0)',
       },
       '.choice-grid': {
         display: 'grid',
