@@ -195,6 +195,7 @@ export const theme = extendTheme({
       },
       '.btn-primary:hover': {
         transform: 'translateY(-1px)',
+        backgroundColor: 'gray',
         boxShadow: '0 18px 40px rgba(14, 165, 233, 0.4)',
       },
       '.btn-primary:active': {
