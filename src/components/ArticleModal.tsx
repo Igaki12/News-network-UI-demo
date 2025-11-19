@@ -189,11 +189,11 @@ export const ArticleModal = ({ isOpen, nodeId, article, relatedArticles, onClose
               <Text id="article-content" whiteSpace="pre-wrap">
                 {currentArticle.content}
               </Text>
-              <Box id="article-actions" mt={4} style={{ display: view === 'article' ? 'block' : 'none' }}>
-                <Button id="read-another-btn" className="btn-primary" marginRight="8px" type="button" onClick={handleReadAnother}>
+              <Box id="article-actions" mt={0} style={{ display: view === 'article' ? 'block' : 'none' }}>
+                <Button id="read-another-btn" className="btn-primary" marginRight="8px" type="button" onClick={handleReadAnother} mt={4}>
                   他の記事を読む
                 </Button>
-                <Button id="start-quiz-btn" className="btn-primary" type="button" onClick={handleStartQuiz}>
+                <Button id="start-quiz-btn" className="btn-primary" type="button" onClick={handleStartQuiz} mt={4}>
                   理解度テストを始める
                 </Button>
               </Box>
