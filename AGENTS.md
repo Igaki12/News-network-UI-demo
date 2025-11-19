@@ -1,18 +1,18 @@
 # AGENTS_for_React
 
-このドキュメントは **本リポジトリとは別の新規 GitHub リポジトリ** で `commonsense-latest.html` の UI/挙動を **React + Vite + TypeScript + Chakra UI** + `vis-network` で 1:1 再現し、GitHub Pages で公開するためのガイドです。新リポジトリには参照用として `commonsense-latest.html` をコピー（例：`reference/commonsense-latest.html`）して差分確認に利用します。既存の `AGENTS.md` ポリシー（JSONL は利用者アップロードのみ／バックアップ命名など）は新リポジトリでも必ず守ってください。
+このドキュメントは `News-network-UI-demo` リポジトリで `commonsense-latest.html` の UI/挙動を **React + Vite + TypeScript + Chakra UI** + `vis-network` で 1:1 再現し、GitHub Pages で公開するためのガイドです。ルート直下に参照用として `reference/commonsense-latest.html` を配置し、実装との比較に利用します。既存の `AGENTS.md` ポリシー（JSONL は利用者アップロードのみ／バックアップ命名など）は本リポジトリでも必ず守ってください。
 
 ---
 
 ## 1. 開発スタックとビルドルール
-- 新リポジトリ（例: `news-map-react`）を GitHub 上で作成し、ローカルに `git clone`。トップレベルに `reference/commonsense-latest.html` を配置して常に参照できるようにします。
-- `npm create vite@latest . -- --template react-ts` を想定。GitHub Pages 公開向けに `vite.config.ts` の `base` を `/<REPO_NAME>/` に設定。  
+- 本リポジトリ（`News-network-UI-demo`）は `npm create vite@latest . -- --template react-ts` で初期化済み。`reference/commonsense-latest.html` を常に残し、UI 差分確認に用います。
+- GitHub Pages 公開向けに `vite.config.ts` の `base` を `'/News-network-UI-demo/'` に設定済み。  
 - Chakra UI（`@chakra-ui/react` + Emotion + Framer Motion）を導入し、グローバルテーマで以下を再現：  
   - ルート変数：`--bg`, `--text`, `--muted`, `--edge`, `--glass-bg`, `--glass-border`, `--glass-shadow`, `--accent-glow`.  
   - ガラスモーフィズムカード（`hud-card`）と `cardReveal` / `contentFade` / `pulse-ring` アニメーション。  
   - 画面背景を `#network` で全面固定、HUD を `position: fixed` でオーバーレイ。
 - `vis-network` は npm パッケージを使い、`import { DataSet, Network } from 'vis-network/standalone';` と `useEffect` + `useRef` で DOM 制御。
-- `npm run build` → `dist/*` を `docs/` にコピーするビルドスクリプト（例：`"build": "vite build && rm -rf docs && mkdir -p docs && cp -R dist/* docs/"`）。GitHub Pages 上で `https://<GitHubユーザー>.github.io/<REPO_NAME>/` を確認。
+- `npm run build` → `dist/*` を `docs/` にコピーするビルドスクリプト（`"build": "tsc -b && vite build && rm -rf docs && mkdir -p docs && cp -R dist/* docs/"`）。GitHub Pages 上で `https://igaki12.github.io/News-network-UI-demo/` を確認。
 
 ---
 
@@ -38,8 +38,9 @@
 ## 3. データ処理フロー（JSONL → Graph）
 
 1. **アップロード**  
-   - `<input type="file" accept=".jsonl">` を Chakra `VisuallyHiddenInput` + `Button` でラップ。ファイル選択後、`File.text()` → 行ごとに分割 → `JSON.parse`。  
-   - バリデーション：`date_id`, `named_entities`, `content` が揃っているレコードのみ採用。`articlesByDate` (Map)、`availableDates` (昇順) を構築。  
+   - `<label class="file-label">` 内にネイティブの `<input type="file" accept=".jsonl">` を隠して配置し、クリックで `File.text()` → 行ごとに分割 → `JSON.parse` します。  
+   - バリデーション：`date_id`, `named_entities`, `content` が揃っているレコードのみ採用。`articlesByDate`（`Record<string, Article[]>`）、`availableDates`（昇順）を構築。  
+   - 「用意されているファイルを使用する」ボタンは `public/news_full_mcq3_type9_entities_novectors.jsonl` を `import.meta.env.BASE_URL` 経由で `fetch` し、ユーザー操作でのみ読み込む。  
    - 有効データが 1 件以上あれば：アップロード UI を `display: none`、日付ナビとランダム出題ボタンを表示。`NodeDetailsCard` も `display: block` に。
 
 2. **状態管理**  
@@ -55,21 +56,27 @@
    };
    ```
    - `allArticles: Article[]`
-   - `articlesByDate: Map<string, Article[]>`
+   - `articlesByDate: Record<string, Article[]>`
    - `availableDates: string[]`
    - `currentDateIndex: number`
+   - `graphData: GraphPayload | null`
+   - `nodeMeta: Record<string, NodeMeta>`
+   - `details: string[]`
+   - `articleModalData: { nodeId: string; article: Article; related: Article[] } | null`
    - `completedNodes: Set<string>`（GOOD 判定時に登録）
-   - `currentQuiz`（`nodeId`, `article`, `questions`, `qIndex`, `good`, `bad`）
-   - `randomState`（`article`, `question`）  
-   これらは React Context もしくは上位コンポーネント state で保持し、`useMemo` で計算済みデータセットを供給。
+   - `randomState: { article: Article; question: QuizQuestion } | null`
+   - `isRandomModalOpen: boolean`
+   - `isLoadingData: boolean`
+   - `maxNodes: number`（`window.innerWidth <= 720` なら 20、それ以外は 40）  
+   クイズ進行中の state は `ArticleModal` 内部で完結させる。これらは上位コンポーネントで保持し、`useEffect` で依存データ（グラフなど）を再計算する。
 
 3. **グラフ生成**  
-   - `renderGraphForDate(dateStr)` と同じアルゴリズムを `useEffect` 内に移植。  
-   - `entityCount`: 出現頻度マップ。`named_entities` の重複は `Set` で排除。  
-   - `entitySubjectCounts`: `subject_codes[].subject_matter` のヒートマップ。  
-   - トップ 50 エンティティでノードを生成。`PALETTE` と `hash()` で主題ごとの背景色を決定。  
-   - `logValue(count)` = `(!c || c <= 1) ? 2 : Math.log(c) * 5 + 2` でノードサイズ。  
-   - `edgeCounts`: 同一記事内での共起を `keyPair(a,b)`（昇順連結）で計数。2 回以上のみ描画。  
+   - `useEffect` 内で `buildGraphPayload(articles, maxNodes)` を呼び出し、記事配列から `GraphPayload` と `nodeMeta` を得る。  
+   - `maxNodes` は画面幅に応じて 40（デスクトップ）/20（720px 以下）を切り替える。  
+   - `entityCount`: 出現頻度マップ。`named_entities` の重複は `Set` で排除。`entitySubjectCounts` で `subject_codes[].subject_matter` のヒートマップを保持する。  
+   - トップ `maxNodes` エンティティでノードを生成し、`palette` + `hash()` で主題ごとの背景色を決定。  
+   - ノードサイズは `scaleValue(count, totalCount, topMaxCount)`（最小 12 / 最大 48、頻度比率と対数値の平均）で算出し、`value` に入れる。  
+   - `edgeCounts`: 同一記事内での共起を `keyPair(a,b)`（昇順連結）で計数し、2 回以上のみ描画。  
    - `vis-network` `options`:
      ```ts
      const options = {
@@ -78,19 +85,19 @@
        nodes: {
          shape: 'dot',
          font: { multi: 'html', size: 18, strokeWidth: 3, strokeColor: 'white' },
-         scaling: { min: 15, max: 60 },
+         scaling: { min: 12, max: 40 },
          borderWidth: 2,
        },
-       edges: { color: { color: '#cccccc', highlight: '#b0b0b0' }, smooth: { type: 'continuous' } },
+       edges: { color: { color: '#cccccc', highlight: '#b0b0b0' }, smooth: { enabled: true, type: 'continuous', roundness: 0.5 } },
      };
      ```
-   - 初回だけ `new Network(container, data, options)`、以降は `network.setData(data)`。
-   - `completedNodes` には正解済みノード ID を入れ、`requestAnimationFrame` で `glowAnimation`（shadow color `#FFD700`, size = `30 + 15 * sin(t)`）を継続。React では `useEffect` で開始/cleanup。
+   - 初回だけ `new Network(container, data, options)`、以降は `network.setData(data)` で更新。  
+   - `completedNodes` には正解済みノード ID を入れ、`requestAnimationFrame` で `shadow: { color: '#FFD700', size: 30 + 15 * sin(t) }` を継続適用。`useEffect` cleanup で `cancelAnimationFrame` する。
 
 4. **ノードクリック → 詳細 & モーダル**  
-   - クリック時に `params.nodes[0]` を取得し、`detailsList` に `<li><b>${id}</b>: ${nodeData.title}</li>` を表示。  
-   - `relatedArticles`: 該当エンティティを含み `content.length > 50` の記事。本文長降順で上位 5 件 → ランダム 1 件 → `ArticleModal` を開く。  
-   - 該当記事がなければ HUD に「詳細な関連記事が見つかりませんでした。」を追記。
+   - クリック時に `params.nodes[0]` を取得し、`nodeMeta` を参照して `details` に ``${nodeId}: 出現回数 ${count}`` を表示（未選択時は空）。  
+   - `relatedArticles`: 該当エンティティを含み `content.length > 50` の記事すべてを収集し、`ArticleModal` へ `related` として渡す。表示記事は `pickFeaturedArticle` で本文長上位 5 件からランダムに選ぶ（候補が無い場合はプール先頭）。  
+   - 該当記事がなければ HUD に「詳細な関連記事が見つかりませんでした。」を追記し、モーダルは閉じる。
 
 ---
 
@@ -108,13 +115,14 @@
      - `question` が文字列  
      - `choices` は文字列配列／空文字は除外  
      - 先頭要素のみ `isCorrect: true`  
+   - 有効な設問が 0 件なら `finishQuiz(true)` を即時呼び出し、記事閲覧だけでクリア扱いにする。  
    - `shuffleArray` で選択肢を毎回シャッフル。  
    - `renderChoiceButtons`：Chakra `Button` を `grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))` で配置。  
    - 回答後は `handleChoiceSelection` ロジックを忠実に再現：  
      - ボタンを無効化  
      - 正解：選択肢に `.correct` クラスを付与、`currentQuiz.good++`  
      - 不正解：`.incorrect` + 正解のボタンを `.correct` に、`currentQuiz.bad++`  
-     - `quizFeedback` に Good/BAD 相当の文言を表示し 1.4 秒後に次の設問へ。
+     - `quizFeedback` に `正解です！` / `正解は「xxx」です。` を表示し 5 秒後に次の設問へ（終端なら `finishQuiz()`）。
 
 3. **Result View**  
    - `finishQuiz(forceSuccess = false)`：正答数 >= 誤答数なら成功。  
@@ -137,7 +145,7 @@
 - `availableDates` を昇順に並べ、初期値は最新日付。  
 - `currentDateDisplay` には `YYYY-MM-DD` フォーマット（`20250115` → `2025-01-15`）。  
 - `prev-date-btn` / `next-date-btn` は端で `disabled`。  
-- 日付変更ごとに `renderGraphForDate` + HUD 文言を更新。  
+- 日付変更ごとに `buildGraphPayload` を再計算し、HUD 文言も更新。  
 - JSONL 未読み込み時：  
   - `upload-container` 以外は `hidden` or `display: none`。  
   - `hudBottomLeft` は `display: none`。  
@@ -158,11 +166,11 @@
    - スマホ幅（<=720px）で HUD padding, モーダル内余白が HTML と近似しているかを確認。
 
 2. **GitHub Pages デプロイ確認**  
-   - `npm run build` 後、`docs/` をコミットして新リポジトリに push。GitHub Pages（`Branch: main / Folder: docs` など）を有効化。  
+   - `npm run build` 後、生成された `docs/` をコミットして本リポジトリ（`main` ブランチ / `docs` フォルダ公開）へ push。  
    - `https://igaki12.github.io/News-network-UI-demo/` で動作＆ネットワークリソース（`vis-network` を含む）が 200 を返すかを DevTools で確認。
 
 3. **注意事項**  
-   - JSONL は利用者アップロードのみ（リポジトリ同梱データをオートロードしない）。  
+   - JSONL は利用者アップロードのみ（リポジトリ同梱データも、ユーザーが「用意されているファイルを使用する」を押したときだけ fetch する）。  
    - UI/コピーは `commonsense-latest.html` の表現をそのまま踏襲（文言・ボタン名・アラート文含む）。  
    - 将来の API 連携時にも差し替えやすいよう、データ読み込み・グラフ変換・クイズロジックをモジュール化しておく。
 
