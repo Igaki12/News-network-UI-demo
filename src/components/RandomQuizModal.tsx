@@ -90,7 +90,7 @@ export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle }: Pr
                 onOpenArticle()
               }}
             >
-              どんなニュース記事なのか確認する（クイズを中断する）
+              中断して元記事を確認
             </Button>
           </Box>
         </Box>
