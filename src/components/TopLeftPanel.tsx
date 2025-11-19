@@ -36,7 +36,7 @@ export const TopLeftPanel = ({
   }
 
   return (
-    <Box id="hudTopLeft" className="overlay hud-card" aria-live="polite" mr={{ base: '16px', md: undefined }}>
+    <Box id="hudTopLeft" className="overlay hud-card" aria-live="polite" left={{ base: '', md: '16px' }}>
       <Heading
         as="h1"
         bgGradient="linear(110deg, rgba(14,165,233,0.95), rgba(59,130,246,0.95), rgba(14,165,233,0.8))"
@@ -51,8 +51,8 @@ export const TopLeftPanel = ({
             <Text>
               分析したいニュース記事のJSONLファイルをアップロードしてください。その日その時代を飾った出来事についてネットワーク地図を作成します。
             </Text>
-            <label className="file-label">
-              <input type="file" accept=".jsonl" onChange={handleFileChange} />
+            <label className={`file-label${isLoading ? ' disabled' : ''}`}>
+              <input type="file" accept=".jsonl" onChange={handleFileChange} disabled={isLoading} />
               <PlusSquareIcon boxSize="20px" aria-hidden="true" />
               <span>ファイルを選択</span>
             </label>
@@ -63,6 +63,8 @@ export const TopLeftPanel = ({
               className="btn-primary"
               onClick={onUseProvidedFile}
               isDisabled={isLoading}
+              isLoading={isLoading}
+              loadingText="読み込み中..."
             >
               用意されているファイルを使用する
             </Button>
@@ -76,11 +78,11 @@ export const TopLeftPanel = ({
             表示する日付を選択してください
           </Text>
           <Box id="date-controls">
-            <button id="prev-date-btn" className="date-nav-btn" title="前の日" onClick={onPrevDate} disabled={disablePrev}>
+            <button id="prev-date-btn" className="date-nav-btn" title="前の日" onClick={onPrevDate} disabled={disablePrev || isLoading}>
               ◀
             </button>
             <div id="current-date-display">{currentDateDisplay || 'YYYY-MM-DD'}</div>
-            <button id="next-date-btn" className="date-nav-btn" title="次の日" onClick={onNextDate} disabled={disableNext}>
+            <button id="next-date-btn" className="date-nav-btn" title="次の日" onClick={onNextDate} disabled={disableNext || isLoading}>
               ▶
             </button>
           </Box>
@@ -90,6 +92,7 @@ export const TopLeftPanel = ({
             marginTop="16px"
             type="button"
             onClick={onRandomQuestion}
+            isDisabled={isLoading}
           >
             ランダムで問題を出題する
           </Button>

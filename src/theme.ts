@@ -115,6 +115,13 @@ export const theme = extendTheme({
       '.file-label input': {
         display: 'none',
       },
+      '.file-label.disabled': {
+        opacity: 0.55,
+        pointerEvents: 'none',
+        cursor: 'not-allowed',
+        boxShadow: 'none',
+        transform: 'none',
+      },
       '#date-controls': {
         display: 'flex',
         alignItems: 'center',
