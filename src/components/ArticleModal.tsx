@@ -1,4 +1,4 @@
-import { Box, Button } from '@chakra-ui/react'
+import { Box, Button, Heading, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Article, QuizChoice, QuizQuestion } from '../types'
 import { normalizeMultipleChoiceQuestion, pickFeaturedArticle, shuffleArray } from '../utils/data'
@@ -171,51 +171,64 @@ export const ArticleModal = ({ isOpen, nodeId, article, relatedArticles, onClose
     <Box className={`modal ${isOpen ? 'visible' : ''}`}>
       <Box className="backdrop" onClick={onClose} />
       <Box className="dialog" role="dialog" aria-modal="true">
-        <header>
-          <h2 id="modal-title">{modalTitle}</h2>
-          <button className="close" aria-label="閉じる" onClick={onClose}>
+        <Box as="header" display="flex" justifyContent="space-between" alignItems="center" mb="14px">
+          <Heading as="h2" id="modal-title" size="md" m={0}>
+            {modalTitle}
+          </Heading>
+          <Button aria-label="閉じる" onClick={onClose} variant="ghost" size="sm">
             ✕
-          </button>
-        </header>
-        <div className="dialog-content">
+          </Button>
+        </Box>
+        <Box className="dialog-content">
           {shouldShowArticleView && (
-            <div id="article-view">
-              <h3 id="article-headline">{articleHeadline}</h3>
-              <p id="article-content">{currentArticle.content}</p>
-              <div id="article-actions" style={{ display: view === 'article' ? 'block' : 'none' }}>
+            <Box id="article-view">
+              <Heading as="h3" size="md" id="article-headline" mb={3}>
+                {articleHeadline}
+              </Heading>
+              <Text id="article-content" whiteSpace="pre-wrap">
+                {currentArticle.content}
+              </Text>
+              <Box id="article-actions" mt={4} style={{ display: view === 'article' ? 'block' : 'none' }}>
                 <Button id="read-another-btn" className="btn-primary" marginRight="8px" type="button" onClick={handleReadAnother}>
                   他の記事を読む
                 </Button>
                 <Button id="start-quiz-btn" className="btn-primary" type="button" onClick={handleStartQuiz}>
                   理解度テストを始める
                 </Button>
-              </div>
-            </div>
+              </Box>
+            </Box>
           )}
 
           {view === 'quiz' && (
-            <div id="quiz-view">
-              <p id="quiz-progress">
+            <Box id="quiz-view">
+              <Text id="quiz-progress">
                 問題 {quizIndex + 1} / {quizQuestions.length}
-              </p>
-              <p id="quiz-question">{currentQuestion?.prompt}</p>
-              <div id="quiz-choices" className="choice-grid" data-locked={choicesLocked}>
+              </Text>
+              <Text id="quiz-question" mt={2}>
+                {currentQuestion?.prompt}
+              </Text>
+              <Box id="quiz-choices" className="choice-grid" data-locked={choicesLocked}>
                 {shuffledChoices.map((choice) => (
-                  <button
+                  <Button
                     key={choice.id}
                     type="button"
                     className={`choice-button ${choiceStatus[choice.id] ?? ''}`}
                     disabled={choicesLocked}
                     onClick={() => handleChoiceSelection(choice)}
+                    variant="unstyled"
+                    whiteSpace="normal"
+                    height="auto"
+                    textAlign="left"
+                    lineHeight="1.5"
                   >
                     {choice.text}
-                  </button>
+                  </Button>
                 ))}
-              </div>
+              </Box>
               {feedback && (
-                <div id="quiz-feedback" className="answer-box">
+                <Box id="quiz-feedback" className="answer-box">
                   {feedback}
-                </div>
+                </Box>
               )}
               <Button
                 id="toggle-article-btn"
@@ -226,18 +239,18 @@ export const ArticleModal = ({ isOpen, nodeId, article, relatedArticles, onClose
               >
                 {isArticleVisibleInQuiz ? '記事を隠す' : '根拠となる記事を確認する'}
               </Button>
-            </div>
+            </Box>
           )}
 
           {view === 'result' && resultMessage && (
-            <div id="quiz-result">
-              <div className="result-animation">
+            <Box id="quiz-result">
+              <Box className="result-animation">
                 <div id="result-icon">{resultMessage.icon}</div>
-                <p id="result-text">{resultMessage.text}</p>
-              </div>
-            </div>
+                <Text id="result-text">{resultMessage.text}</Text>
+              </Box>
+            </Box>
           )}
-        </div>
+        </Box>
       </Box>
     </Box>
   )

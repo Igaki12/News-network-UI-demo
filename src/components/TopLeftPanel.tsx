@@ -36,26 +36,29 @@ export const TopLeftPanel = ({
 
   return (
     <Box id="hudTopLeft" className="overlay hud-card" aria-live="polite">
-      <Heading as="h1">ニュースの「地図」を広げる</Heading>
+      <Heading as="h1">トピックマップを広げる</Heading>
       {!hasData && (
-        <Box id="upload-container" className="file-upload-area">
-          <Text>
-            分析したいニュース記事のJSONLファイルをアップロードしてください。その日その時代を飾った出来事についてネットワーク地図を作成します。
-          </Text>
-          <label className="file-label">
-            <input type="file" accept=".jsonl" onChange={handleFileChange} />
-            📁 ファイルを選択
-          </label>
-          <Button
-            mt="16px"
-            type="button"
-            className="btn-primary"
-            onClick={onUseProvidedFile}
-            isDisabled={isLoading}
-          >
-            用意されているファイルを使用する
-          </Button>
-        </Box>
+        <>
+          <Box id="upload-container" className="file-upload-area">
+            <Text>
+              分析したいニュース記事のJSONLファイルをアップロードしてください。その日その時代を飾った出来事についてネットワーク地図を作成します。
+            </Text>
+            <label className="file-label">
+              <input type="file" accept=".jsonl" onChange={handleFileChange} />
+              📁 ファイルを選択
+            </label>
+            <Text>または</Text>
+            <Button
+              mb="16px"
+              type="button"
+              className="btn-primary"
+              onClick={onUseProvidedFile}
+              isDisabled={isLoading}
+            >
+              用意されているファイルを使用する
+            </Button>
+          </Box>
+        </>
       )}
 
       {hasData && (

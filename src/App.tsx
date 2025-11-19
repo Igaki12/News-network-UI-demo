@@ -43,9 +43,20 @@ function App() {
   const [randomState, setRandomState] = useState<RandomState | null>(null)
   const [isRandomModalOpen, setRandomModalOpen] = useState(false)
   const [isLoadingData, setIsLoadingData] = useState(false)
+  const [maxNodes, setMaxNodes] = useState(() => (typeof window !== 'undefined' && window.innerWidth <= 720 ? 20 : 40))
 
   const hasData = availableDates.length > 0
   const currentDate = hasData && currentDateIndex >= 0 ? availableDates[currentDateIndex] : null
+
+  useEffect(() => {
+    const handleResize = () => {
+      const nextCap = window.innerWidth <= 720 ? 20 : 40
+      setMaxNodes(nextCap)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     if (!currentDate) {
@@ -54,10 +65,11 @@ function App() {
       return
     }
     const articles = articlesByDate[currentDate] || []
-    const { graph, nodeMeta } = buildGraphPayload(articles)
+    // Node count cap: 40 for desktop, 20 for <=720px screens (requested behavior)
+    const { graph, nodeMeta } = buildGraphPayload(articles, maxNodes)
     setGraphData(graph)
     setNodeMeta(nodeMeta)
-  }, [articlesByDate, currentDate])
+  }, [articlesByDate, currentDate, maxNodes])
 
   const applyParsedArticles = useCallback((parsed: Article[]) => {
     const { byDate, dates } = groupArticlesByDate(parsed)

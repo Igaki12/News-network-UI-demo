@@ -19,9 +19,14 @@ const palette = [
   '#f4f9e8',
 ]
 
-const logValue = (count: number) => {
-  if (!count || count <= 1) return 2
-  return Math.log(count) * 5 + 2
+const scaleValue = (count: number, totalCount: number, maxCount: number) => {
+  const min = 12
+  const max = 18
+  if (!count || count <= 0 || !totalCount || totalCount <= 0) return min
+  const ratio = Math.min(count / totalCount, 1)
+  const logNormalized = maxCount > 0 ? Math.log(count + 1) / Math.log(maxCount + 1) : ratio
+  const blended = (ratio + logNormalized) / 2
+  return min + (max - min) * blended
 }
 
 const keyPair = (a: string, b: string) => (a < b ? `${a}|||${b}` : `${b}|||${a}`)
@@ -85,7 +90,8 @@ export const groupArticlesByDate = (articles: Article[]) => {
   return { byDate, dates }
 }
 
-export const buildGraphPayload = (articles: Article[]) => {
+export const buildGraphPayload = (articles: Article[], maxNodes = 50) => {
+  // maxNodes is supplied from App to enforce 40-node desktop / 20-node mobile caps per UI spec.
   const entityCount = new Map<string, number>()
   const entitySubjectCounts = new Map<string, Map<string, number>>()
   const articleLookup = new Map<string, Article[]>()
@@ -113,11 +119,14 @@ export const buildGraphPayload = (articles: Article[]) => {
 
   const topEntities = Array.from(entityCount.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 50)
+    .slice(0, maxNodes)
     .map(([entity]) => entity)
 
   const nodes: GraphNodeInput[] = []
   const nodeMeta: Record<string, NodeMeta> = {}
+  const sortedCounts = Array.from(entityCount.values()).sort((a, b) => b - a)
+  const totalCount = sortedCounts.slice(0, maxNodes).reduce((sum, c) => sum + c, 0)
+  const topMaxCount = sortedCounts[0] ?? 1
 
   topEntities.forEach((entity) => {
     const subjectMap = entitySubjectCounts.get(entity)
@@ -136,7 +145,7 @@ export const buildGraphPayload = (articles: Article[]) => {
     nodes.push({
       id: entity,
       label: `<b>${entity}</b>`,
-      value: logValue(count),
+      value: scaleValue(count, totalCount, topMaxCount),
       title: `出現回数: ${count}`,
       color: { background: bgColor, border: borderFor(bgColor) },
     })

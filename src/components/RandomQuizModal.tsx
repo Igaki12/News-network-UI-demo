@@ -1,4 +1,4 @@
-import { Box, Button } from '@chakra-ui/react'
+import { Box, Button, Heading, Text } from '@chakra-ui/react'
 import { useEffect, useMemo, useState } from 'react'
 import type { QuizChoice, QuizQuestion } from '../types'
 import { shuffleArray } from '../utils/data'
@@ -15,6 +15,8 @@ export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle }: Pr
   const [feedback, setFeedback] = useState<string | null>(null)
   const [locked, setLocked] = useState(false)
 
+  const shuffledChoices = useMemo(() => (question ? shuffleArray(question.choices) : []), [question])
+
   useEffect(() => {
     if (isOpen) {
       setChoiceStatus({})
@@ -24,8 +26,6 @@ export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle }: Pr
   }, [isOpen, question])
 
   if (!isOpen || !question) return null
-
-  const shuffled = useMemo(() => shuffleArray(question.choices), [question])
 
   const handleChoiceSelection = (choice: QuizChoice) => {
     if (locked) return
@@ -46,33 +46,40 @@ export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle }: Pr
     <Box className={`modal ${isOpen ? 'visible' : ''}`}>
       <Box className="backdrop" onClick={onClose} />
       <Box className="dialog" role="dialog" aria-modal="true">
-        <header>
-          <h2>ランダムに確認問題を出題する</h2>
-          <button className="close" aria-label="閉じる" onClick={onClose}>
+        <Box as="header" display="flex" justifyContent="space-between" alignItems="center" mb="14px">
+          <Heading as="h2" size="md" m={0}>
+            ランダムに確認問題を出題する
+          </Heading>
+          <Button aria-label="閉じる" onClick={onClose} variant="ghost" size="sm">
             ✕
-          </button>
-        </header>
-        <div className="dialog-content" id="random-content">
-          <p id="random-question-text">{question.prompt}</p>
-          <div id="random-choices" className="choice-grid" data-locked={locked}>
-            {shuffled.map((choice) => (
-              <button
+          </Button>
+        </Box>
+        <Box className="dialog-content" id="random-content">
+          <Text id="random-question-text">{question.prompt}</Text>
+          <Box id="random-choices" className="choice-grid" data-locked={locked}>
+            {shuffledChoices.map((choice) => (
+              <Button
                 key={choice.id}
                 type="button"
                 className={`choice-button ${choiceStatus[choice.id] ?? ''}`}
                 onClick={() => handleChoiceSelection(choice)}
                 disabled={locked}
+                variant="unstyled"
+                whiteSpace="normal"
+                height="auto"
+                textAlign="left"
+                lineHeight="1.5"
               >
                 {choice.text}
-              </button>
+              </Button>
             ))}
-          </div>
+          </Box>
           {feedback && (
-            <div id="random-feedback" className="answer-box">
+            <Box id="random-feedback" className="answer-box">
               {feedback}
-            </div>
+            </Box>
           )}
-          <div style={{ textAlign: 'center', marginTop: '24px' }}>
+          <Box textAlign="center" marginTop="24px">
             <Button
               id="random-open-article-btn"
               className="btn-primary"
@@ -84,8 +91,8 @@ export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle }: Pr
             >
               どんなニュース記事なのか確認する
             </Button>
-          </div>
-        </div>
+          </Box>
+        </Box>
       </Box>
     </Box>
   )
