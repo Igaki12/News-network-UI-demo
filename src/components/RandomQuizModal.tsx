@@ -9,9 +9,11 @@ type Props = {
   onClose: () => void
   onOpenArticle: () => void
   onResult?: (isCorrect: boolean) => void
+  currentDateLabel?: string
+  headline?: string
 }
 
-export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle, onResult }: Props) => {
+export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle, onResult, currentDateLabel, headline }: Props) => {
   const [choiceStatus, setChoiceStatus] = useState<Record<string, 'correct' | 'incorrect'>>({})
   const [feedback, setFeedback] = useState<string | null>(null)
   const [locked, setLocked] = useState(false)
@@ -52,18 +54,26 @@ export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle, onRe
   return (
     <Box className={`modal ${isOpen ? 'visible' : ''}`}>
       <Box className="backdrop" onClick={onClose} />
-      <Box className="dialog" role="dialog" aria-modal="true">
-        <Box as="header" display="flex" justifyContent="space-between" alignItems="center" mb="14px">
-          <Heading as="h2" size="md" m={0}>
-            ランダムに確認問題を出題する
-          </Heading>
-          <Button aria-label="閉じる" onClick={onClose} variant="ghost" size="sm">
-            ✕
-          </Button>
-        </Box>
-        <Box className="dialog-content" id="random-content">
-          <Text id="random-question-text">{question.prompt}</Text>
-          <Box id="random-choices" className="choice-grid" data-locked={locked}>
+        <Box className="dialog" role="dialog" aria-modal="true">
+          <Box as="header" display="flex" justifyContent="space-between" alignItems="center" mb="14px">
+            <Heading as="h2" size="md" m={0}>
+              ランダムに確認問題を出題する
+            </Heading>
+            <Button aria-label="閉じる" onClick={onClose} variant="ghost" size="sm">
+              ✕
+            </Button>
+          </Box>
+          <Box className="dialog-content" id="random-content">
+            <Box marginBottom="16px" padding="12px 16px" borderRadius="12px" background="rgba(15,23,42,0.04)" boxShadow="inset 0 0 0 1px rgba(148,163,184,0.25)">
+              <Text fontSize="sm" color="var(--muted)">
+                {currentDateLabel || 'YYYY-MM-DD'}
+              </Text>
+              <Heading as="h4" size="sm" marginTop="6px">
+                {headline || '関連ニュース'}
+              </Heading>
+            </Box>
+            <Text id="random-question-text">{question.prompt}</Text>
+            <Box id="random-choices" className="choice-grid" data-locked={locked}>
             {shuffledChoices.map((choice) => (
               <Button
                 key={choice.id}

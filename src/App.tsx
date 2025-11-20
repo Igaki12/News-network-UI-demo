@@ -401,6 +401,14 @@ function App() {
   const articleModalNodeId = articleModalData?.nodeId ?? null
   const articleModalArticle = articleModalData?.article ?? null
   const articleModalRelated = articleModalData?.related ?? []
+  const randomDateLabel = randomState?.article?.date_id
+    ? formatDateId(randomState.article.date_id)
+    : currentDate
+      ? formatDateId(currentDate)
+      : 'YYYY-MM-DD'
+  const randomHeadline = randomState
+    ? randomState.article.headline || randomState.entityId || randomState.article.named_entities?.[0] || '関連ニュース'
+    : '関連ニュース'
 
   return (
     <Box minH="100dvh">
@@ -434,16 +442,18 @@ function App() {
             onClose={() => setArticleModalData(null)}
             onQuizSuccess={handleQuizSuccess}
           />
-          <RandomQuizModal
-            isOpen={isRandomModalOpen}
-            question={randomState?.question ?? null}
-            onClose={closeRandomModal}
-            onOpenArticle={() => {
-              closeRandomModal()
-              handleRandomOpenArticle()
-            }}
-            onResult={(result) => handleRandomQuestionResult(randomState?.entityId ?? null, result)}
-          />
+      <RandomQuizModal
+        isOpen={isRandomModalOpen}
+        question={randomState?.question ?? null}
+        onClose={closeRandomModal}
+        onOpenArticle={() => {
+          closeRandomModal()
+          handleRandomOpenArticle()
+        }}
+        onResult={(result) => handleRandomQuestionResult(randomState?.entityId ?? null, result)}
+        currentDateLabel={randomDateLabel}
+        headline={randomHeadline}
+      />
         </>
       )}
       {isCbtMode && cbtQuestions.length > 0 && (
