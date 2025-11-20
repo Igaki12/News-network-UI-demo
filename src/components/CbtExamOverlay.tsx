@@ -192,6 +192,18 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
     }
   }
 
+  const progressValue = (Math.max(timeLeft, 0) / TIME_LIMIT_MS) * 100
+
+  const getProgressColorScheme = (value: number) => {
+    if (value > 50) {
+      return 'green'
+    }
+    if (value > 20) {
+      return 'yellow'
+    }
+    return 'red'
+  }
+
   return (
     <Box
       id="cbt-overlay"
@@ -214,7 +226,7 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
               CBTチャレンジモード
             </Heading>
             <Text color="var(--muted)" marginBottom="24px">
-              currentDateの主要エンティティから抽出した理解度テストを10問出題します。制限時間内に回答してください。
+              ランダムに理解度テストを10問出題します。制限時間内に回答してください。
             </Text>
             <Flex justifyContent="space-between" alignItems="center" marginBottom="12px" flexWrap="wrap" gap="8px">
               <Text fontWeight="bold">
@@ -224,7 +236,13 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
                 残り時間: {formatClock(timeLeft)}
               </Badge>
             </Flex>
-            <Progress value={(Math.max(TIME_LIMIT_MS - timeLeft, 0) / TIME_LIMIT_MS) * 100} borderRadius="md" marginBottom="20px" height="8px" />
+            <Progress
+              value={progressValue}
+              borderRadius="md"
+              marginBottom="20px"
+              height="8px"
+              colorScheme={getProgressColorScheme(progressValue)}
+            />
             <Box borderRadius="16px" padding="20px" background="rgba(255,255,255,0.82)" boxShadow="inset 0 0 0 1px rgba(148, 163, 184, 0.2)">
                           <Box marginBottom="16px" padding="12px 16px" borderRadius="12px" background="rgba(15,23,42,0.04)" boxShadow="inset 0 0 0 1px rgba(148,163,184,0.25)">
               <Text fontSize="sm" color="var(--muted)">

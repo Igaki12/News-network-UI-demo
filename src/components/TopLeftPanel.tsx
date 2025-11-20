@@ -1,4 +1,4 @@
-import { PlusSquareIcon } from '@chakra-ui/icons'
+import { ArrowLeftIcon, ArrowRightIcon, PlusSquareIcon } from '@chakra-ui/icons'
 import { Box, Button, Heading, Spacer, Text } from '@chakra-ui/react'
 import type { ChangeEvent } from 'react'
 
@@ -79,14 +79,28 @@ export const TopLeftPanel = ({
           <Text margin="0 0 8px 0" color="var(--muted)" fontSize="14px">
             表示する日付を選択してください
           </Text>
-          <Box id="date-controls">
-            <button id="prev-date-btn" className="date-nav-btn" title="前の日" onClick={onPrevDate} disabled={disablePrev || isLoading}>
-              ◀
-            </button>
-            <div id="current-date-display">{currentDateDisplay || 'YYYY-MM-DD'}</div>
-            <button id="next-date-btn" className="date-nav-btn" title="次の日" onClick={onNextDate} disabled={disableNext || isLoading}>
-              ▶
-            </button>
+          <Box id="date-controls" display="flex" alignItems="center" gap="8px">
+            <Button
+              id="prev-date-btn"
+              aria-label="前の日"
+              onClick={onPrevDate}
+              isDisabled={disablePrev || isLoading}
+              variant="ghost"
+            >
+              <ArrowLeftIcon />
+            </Button>
+            <Box
+              id="current-date-display"
+              textAlign="center"
+              minWidth="120px"
+              fontWeight="medium"
+              aria-live="polite"
+            >
+              {currentDateDisplay || 'YYYY-MM-DD'}
+            </Box>
+            <Button id="next-date-btn" aria-label="次の日" onClick={onNextDate} isDisabled={disableNext || isLoading} variant="ghost">
+              <ArrowRightIcon />
+            </Button>
           </Box>
           <Button
             id="random-question-btn"
