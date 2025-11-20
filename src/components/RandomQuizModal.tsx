@@ -1,4 +1,4 @@
-import { Box, Button, Heading, Text } from '@chakra-ui/react'
+import { Box, Button, CloseButton, Heading, Text } from '@chakra-ui/react'
 import { useEffect, useMemo, useState } from 'react'
 import type { QuizChoice, QuizQuestion } from '../types'
 import { shuffleArray } from '../utils/data'
@@ -59,9 +59,7 @@ export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle, onRe
             <Heading as="h2" size="md" m={0}>
               ランダムに確認問題を出題する
             </Heading>
-            <Button aria-label="閉じる" onClick={onClose} variant="ghost" size="sm">
-              ✕
-            </Button>
+            <CloseButton aria-label="閉じる" onClick={onClose} size="sm" />
           </Box>
           <Box className="dialog-content" id="random-content">
             <Box marginBottom="16px" padding="12px 16px" borderRadius="12px" background="rgba(15,23,42,0.04)" boxShadow="inset 0 0 0 1px rgba(148,163,184,0.25)">

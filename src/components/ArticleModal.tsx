@@ -1,5 +1,5 @@
 import { CheckIcon, WarningTwoIcon } from '@chakra-ui/icons'
-import { Badge, Box, Button, Heading, Text } from '@chakra-ui/react'
+import { Badge, Box, Button, CloseButton, Heading, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Article, QuizChoice, QuizQuestion } from '../types'
 import { normalizeMultipleChoiceQuestion, pickFeaturedArticle, shuffleArray } from '../utils/data'
@@ -176,9 +176,7 @@ export const ArticleModal = ({ isOpen, nodeId, article, relatedArticles, onClose
           <Heading as="h2" id="modal-title" size="md" m={0}>
             {modalTitle}
           </Heading>
-          <Button aria-label="閉じる" onClick={onClose} variant="ghost" size="sm">
-            ✕
-          </Button>
+          <CloseButton aria-label="閉じる" onClick={onClose} size="sm" />
         </Box>
         <Box className="dialog-content">
           {shouldShowArticleView && (
