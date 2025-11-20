@@ -49,3 +49,8 @@ export type QuizQuestion = {
   choices: QuizChoice[]
   correctText: string
 }
+
+export type CbtQuestion = QuizQuestion & {
+  id: string
+  article: Article
+}

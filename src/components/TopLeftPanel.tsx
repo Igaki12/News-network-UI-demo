@@ -1,5 +1,5 @@
 import { PlusSquareIcon } from '@chakra-ui/icons'
-import { Box, Button, Heading, Text } from '@chakra-ui/react'
+import { Box, Button, Heading, Spacer, Text } from '@chakra-ui/react'
 import type { ChangeEvent } from 'react'
 
 type Props = {
@@ -13,6 +13,7 @@ type Props = {
   onRandomQuestion: () => void
   onUseProvidedFile: () => void
   isLoading: boolean
+  onStartCbt: () => void
 }
 
 export const TopLeftPanel = ({
@@ -26,6 +27,7 @@ export const TopLeftPanel = ({
   onRandomQuestion,
   onUseProvidedFile,
   isLoading,
+  onStartCbt,
 }: Props) => {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -95,6 +97,27 @@ export const TopLeftPanel = ({
             isDisabled={isLoading}
           >
             ランダムで問題を出題する
+          </Button>
+          <Spacer />
+          <Button
+            id="cbt-mode-btn"
+            variant="outline"
+            marginTop="12px"
+            borderRadius="14px"
+            type="button"
+            onClick={onStartCbt}
+            isDisabled={isLoading}
+            borderColor="rgba(14, 165, 233, 0.6)"
+            color="var(--text)"
+            background="rgba(255,255,255,0.75)"
+            _hover={{
+              background: 'rgba(14, 165, 233, 0.08)',
+              borderColor: 'var(--accent-glow)',
+              boxShadow: '0 14px 32px rgba(14, 165, 233, 0.18)',
+            }}
+            _disabled={{ opacity: 0.6, cursor: 'not-allowed', boxShadow: 'none' }}
+          >
+            CBTに挑戦する
           </Button>
         </Box>
       )}

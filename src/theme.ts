@@ -235,6 +235,7 @@ export const theme = extendTheme({
         color: '#881337',
       },
       '.modal': {
+        paddingBottom: '20px',
         position: 'fixed',
         inset: 0,
         zIndex: 80,

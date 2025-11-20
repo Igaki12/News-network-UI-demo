@@ -1,6 +1,6 @@
 import { Box } from '@chakra-ui/react'
 import { useCallback, useEffect, useState } from 'react'
-import type { Article, GraphPayload, NodeMeta, QuizQuestion } from './types'
+import type { Article, CbtQuestion, GraphPayload, NodeMeta, QuizQuestion } from './types'
 import {
   buildGraphPayload,
   formatDateId,
@@ -8,8 +8,10 @@ import {
   normalizeMultipleChoiceQuestion,
   parseJsonlArticles,
   pickFeaturedArticle,
+  shuffleArray,
 } from './utils/data'
 import { ArticleModal } from './components/ArticleModal'
+import { CbtExamOverlay } from './components/CbtExamOverlay'
 import { FooterBadge } from './components/FooterBadge'
 import { NetworkCanvas } from './components/NetworkCanvas'
 import { NodeDetailsCard } from './components/NodeDetailsCard'
@@ -44,6 +46,8 @@ function App() {
   const [isRandomModalOpen, setRandomModalOpen] = useState(false)
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [maxNodes, setMaxNodes] = useState(() => (typeof window !== 'undefined' && window.innerWidth <= 720 ? 20 : 40))
+  const [isCbtMode, setCbtMode] = useState(false)
+  const [cbtQuestions, setCbtQuestions] = useState<CbtQuestion[]>([])
 
   const hasData = availableDates.length > 0
   const currentDate = hasData && currentDateIndex >= 0 ? availableDates[currentDateIndex] : null
@@ -84,6 +88,8 @@ function App() {
     setCompletedNodes(new Set())
     setDetails([])
     setArticleModalData(null)
+    setCbtMode(false)
+    setCbtQuestions([])
     return true
   }, [])
 
@@ -206,6 +212,57 @@ function App() {
     setRandomModalOpen(true)
   }
 
+  const prepareCbtQuestions = useCallback(() => {
+    if (!currentDate) {
+      window.alert('日付を選択してください。')
+      return null
+    }
+    const topEntities = Object.keys(nodeMeta)
+    if (topEntities.length === 0) {
+      window.alert('この日付ではグラフに表示できるエンティティがありません。')
+      return null
+    }
+    const entitySet = new Set(topEntities)
+    const articles = articlesByDate[currentDate] || []
+    const pool: CbtQuestion[] = []
+    articles.forEach((article, articleIndex) => {
+      const intersects = Array.isArray(article.named_entities) && article.named_entities.some((entity) => entitySet.has(entity))
+      if (!intersects) return
+      if (!Array.isArray(article.questions) || article.questions.length === 0) return
+      article.questions.forEach((rawQuestion, idx) => {
+        const normalized = normalizeMultipleChoiceQuestion(rawQuestion || undefined)
+        if (!normalized) return
+        pool.push({
+          id: `${article.news_item_id || article.headline || article.date_id}-${articleIndex}-${idx}`,
+          prompt: normalized.prompt,
+          choices: shuffleArray(normalized.choices),
+          correctText: normalized.correctText,
+          article,
+        })
+      })
+    })
+    if (pool.length < 10) {
+      window.alert('この日付ではCBTに必要な10問を準備できません。')
+      return null
+    }
+    return shuffleArray(pool).slice(0, 10)
+  }, [articlesByDate, currentDate, nodeMeta])
+
+  const handleStartCbt = useCallback(() => {
+    const prepared = prepareCbtQuestions()
+    if (!prepared) return
+    setDetails([])
+    setArticleModalData(null)
+    setRandomModalOpen(false)
+    setCbtQuestions(prepared)
+    setCbtMode(true)
+  }, [prepareCbtQuestions])
+
+  const handleExitCbt = useCallback(() => {
+    setCbtMode(false)
+    setCbtQuestions([])
+  }, [])
+
   const handleRandomOpenArticle = () => {
     if (!randomState) return
     const fallback =
@@ -238,37 +295,49 @@ function App() {
 
   return (
     <Box minH="100dvh">
-      <NetworkCanvas data={graphData} onNodeClick={handleNodeClick} completedNodes={completedNodes} />
-      <TopLeftPanel
-        hasData={hasData}
-        onFileSelected={handleFileSelected}
-        currentDateDisplay={currentDate ? formatDateId(currentDate) : 'YYYY-MM-DD'}
-        onPrevDate={handlePrevDate}
-        onNextDate={handleNextDate}
-        disablePrev={!hasData || currentDateIndex === 0}
-        disableNext={!hasData || currentDateIndex === availableDates.length - 1}
-        onRandomQuestion={handleRandomQuestion}
-        onUseProvidedFile={handleUseProvidedFile}
-        isLoading={isLoadingData}
-      />
-      <NodeDetailsCard isVisible={hasData} details={details} hasGlowingNodes={completedNodes.size > 0} />
-      <ArticleModal
-        isOpen={Boolean(articleModalData)}
-        nodeId={articleModalNodeId}
-        article={articleModalArticle}
-        relatedArticles={articleModalRelated}
-        onClose={() => setArticleModalData(null)}
-        onQuizSuccess={handleQuizSuccess}
-      />
-      <RandomQuizModal
-        isOpen={isRandomModalOpen}
-        question={randomState?.question ?? null}
-        onClose={closeRandomModal}
-        onOpenArticle={() => {
-          closeRandomModal()
-          handleRandomOpenArticle()
-        }}
-      />
+      {!isCbtMode && (
+        <>
+          <NetworkCanvas data={graphData} onNodeClick={handleNodeClick} completedNodes={completedNodes} />
+          <TopLeftPanel
+            hasData={hasData}
+            onFileSelected={handleFileSelected}
+            currentDateDisplay={currentDate ? formatDateId(currentDate) : 'YYYY-MM-DD'}
+            onPrevDate={handlePrevDate}
+            onNextDate={handleNextDate}
+            disablePrev={!hasData || currentDateIndex === 0}
+            disableNext={!hasData || currentDateIndex === availableDates.length - 1}
+            onRandomQuestion={handleRandomQuestion}
+            onUseProvidedFile={handleUseProvidedFile}
+            isLoading={isLoadingData}
+            onStartCbt={handleStartCbt}
+          />
+          <NodeDetailsCard isVisible={hasData} details={details} hasGlowingNodes={completedNodes.size > 0} />
+          <ArticleModal
+            isOpen={Boolean(articleModalData)}
+            nodeId={articleModalNodeId}
+            article={articleModalArticle}
+            relatedArticles={articleModalRelated}
+            onClose={() => setArticleModalData(null)}
+            onQuizSuccess={handleQuizSuccess}
+          />
+          <RandomQuizModal
+            isOpen={isRandomModalOpen}
+            question={randomState?.question ?? null}
+            onClose={closeRandomModal}
+            onOpenArticle={() => {
+              closeRandomModal()
+              handleRandomOpenArticle()
+            }}
+          />
+        </>
+      )}
+      {isCbtMode && cbtQuestions.length > 0 && (
+        <CbtExamOverlay
+          questions={cbtQuestions}
+          onExit={handleExitCbt}
+          currentDateLabel={currentDate ? formatDateId(currentDate) : 'YYYY-MM-DD'}
+        />
+      )}
       <FooterBadge hasData={hasData} />
     </Box>
   )
