@@ -320,23 +320,30 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
             <Box display="flex" flexDirection="column" gap="20px" maxHeight="55vh" overflowY="auto" paddingRight="4px">
               {questions.map((question, index) => {
                 const distribution = result.distributions[question.id] ?? []
-                const selected = answers[question.id]?.choiceId ?? null
+                // const selected = answers[question.id]?.choiceId ?? null
+                const articleHeadline = question.article.headline || question.article.named_entities?.[0] || '関連ニュース'
+                const articleContent = question.article.content || ''
+                const truncatedContent = articleContent.length > 160 ? `${articleContent.slice(0, 160)}…` : articleContent
                 return (
                   <Box key={question.id} borderRadius="16px" padding="18px" background="rgba(255,255,255,0.88)" boxShadow="inset 0 0 0 1px rgba(148,163,184,0.16)">
                     <Flex justifyContent="space-between" alignItems="center" marginBottom="10px" flexWrap="wrap" gap="8px">
                       <Text fontWeight="bold">
                         Q{index + 1}. {question.prompt}
                       </Text>
-                      {selected ? (
-                        <Badge colorScheme="purple" borderRadius="999px" padding="6px 10px">
-                          あなたの回答を表示中
-                        </Badge>
-                      ) : (
-                        <Badge borderRadius="999px" padding="6px 10px" colorScheme="gray">
-                          未回答
-                        </Badge>
-                      )}
                     </Flex>
+                    <Box marginBottom="12px" display="grid" gap="6px">
+                      <Text fontSize="sm" color="var(--muted)">
+                        {currentDateLabel || 'YYYY-MM-DD'}
+                      </Text>
+                      <Heading fontSize="sm" color="var(--muted)">
+                        問題タイトル: {articleHeadline}
+                      </Heading>
+                      {truncatedContent && (
+                        <Text fontSize="sm" color="var(--muted)" whiteSpace="pre-wrap">
+                          {truncatedContent}
+                        </Text>
+                      )}
+                    </Box>
                     <Box display="flex" flexDirection="column" gap="12px">
                       {distribution.map((choice) => (
                         <Box key={choice.choiceId}>
