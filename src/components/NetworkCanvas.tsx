@@ -12,6 +12,7 @@ type Props = {
   data: GraphPayload | null
   onNodeClick: (nodeId: string | null) => void
   completedNodes: Set<string>
+  selectedNodeIds?: string[]
 }
 
 const networkOptions: Options = {
@@ -32,7 +33,7 @@ const networkOptions: Options = {
   },
 }
 
-export const NetworkCanvas = ({ data, onNodeClick, completedNodes }: Props) => {
+export const NetworkCanvas = ({ data, onNodeClick, completedNodes, selectedNodeIds = [] }: Props) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const networkRef = useRef<Network | null>(null)
   const animationRef = useRef<number | null>(null)
@@ -124,6 +125,17 @@ export const NetworkCanvas = ({ data, onNodeClick, completedNodes }: Props) => {
     },
     [],
   )
+
+  useEffect(() => {
+    const network = networkRef.current
+    if (!network) return
+    if (selectedNodeIds.length > 0) {
+      network.selectNodes(selectedNodeIds)
+      network.fit({ nodes: selectedNodeIds, animation: { duration: 700, easingFunction: 'easeInOutQuad' } })
+    } else {
+      network.unselectAll()
+    }
+  }, [selectedNodeIds])
 
   return <Box id="network" aria-label="共起ネットワーク" ref={containerRef} />
 }

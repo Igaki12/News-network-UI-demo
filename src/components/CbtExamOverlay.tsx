@@ -6,7 +6,7 @@ const TIME_LIMIT_MS = 10 * 60 * 1000
 
 type Props = {
   questions: CbtQuestion[]
-  onExit: () => void
+  onExit: (payload: { highlighted: string[]; glowing: string[] } | null) => void
   currentDateLabel: string
 }
 
@@ -150,6 +150,19 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
     setSelectedChoiceId(null)
   }, [currentQuestion])
 
+  const buildExitPayload = useCallback(() => {
+    const highlighted = Array.from(new Set(questions.map((question) => question.entityId).filter(Boolean)))
+    const glowing = Array.from(
+      new Set(
+        questions
+          .filter((question) => answers[question.id]?.isCorrect)
+          .map((question) => question.entityId)
+          .filter(Boolean),
+      ),
+    )
+    return { highlighted, glowing }
+  }, [questions, answers])
+
   if (questions.length === 0) {
     return (
       <Box
@@ -166,7 +179,7 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
             CBTモードを開始できません
           </Heading>
           <Text>必要な問題を準備できませんでした。元の画面に戻ってください。</Text>
-          <Button marginTop="24px" onClick={onExit} className="btn-primary">
+          <Button marginTop="24px" onClick={() => onExit(null)} className="btn-primary">
             戻る
           </Button>
         </Box>
@@ -244,14 +257,14 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
               colorScheme={getProgressColorScheme(progressValue)}
             />
             <Box borderRadius="16px" padding="20px" background="rgba(255,255,255,0.82)" boxShadow="inset 0 0 0 1px rgba(148, 163, 184, 0.2)">
-                          <Box marginBottom="16px" padding="12px 16px" borderRadius="12px" background="rgba(15,23,42,0.04)" boxShadow="inset 0 0 0 1px rgba(148,163,184,0.25)">
-              <Text fontSize="sm" color="var(--muted)">
-                {currentDateLabel || 'YYYY-MM-DD'}
-              </Text>
-              <Heading as="h4" size="sm" marginTop="6px">
-                {currentHeadline}
-              </Heading>
-            </Box>
+              <Box marginBottom="16px" padding="12px 16px" borderRadius="12px" background="rgba(15,23,42,0.04)" boxShadow="inset 0 0 0 1px rgba(148,163,184,0.25)">
+                <Text fontSize="sm" color="var(--muted)">
+                  {currentDateLabel || 'YYYY-MM-DD'}
+                </Text>
+                <Heading as="h4" size="sm" marginTop="6px">
+                  {currentHeadline}
+                </Heading>
+              </Box>
               <Heading as="h3" size="md" marginBottom="12px">
                 {currentQuestion.prompt}
               </Heading>
@@ -332,15 +345,20 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
                       </Text>
                     </Flex>
                     <Box marginBottom="12px" display="grid" gap="6px">
-                      <Text fontSize="sm" color="var(--muted)">
-                        {currentDateLabel || 'YYYY-MM-DD'}
-                      </Text>
+                      <Box margin="0" display="flex" alignItems="center" gap="8px">
+                        <Text fontSize="sm" color="var(--muted)">
+                          {currentDateLabel || 'YYYY-MM-DD'}
+                        </Text>
+                        <Badge colorScheme="gray" variant="outline" fontSize="xs" borderRadius="999px" padding="2px 12px">
+                          関連エンティティ: {question.entityId}
+                        </Badge>
+                      </Box>
                       <Heading fontSize="sm" color="var(--muted)">
-                        問題タイトル: {articleHeadline}
+                        {articleHeadline}
                       </Heading>
                       {truncatedContent && (
                         <Text fontSize="sm" color="var(--muted)" whiteSpace="pre-wrap">
-                          {truncatedContent}
+                          本文：{truncatedContent}
                         </Text>
                       )}
                     </Box>
@@ -371,7 +389,7 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
               })}
             </Box>
             <Flex justifyContent="flex-end" marginTop="28px">
-              <Button className="btn-primary" onClick={onExit}>
+              <Button className="btn-primary" onClick={() => onExit(buildExitPayload())}>
                 元の画面に戻る
               </Button>
             </Flex>

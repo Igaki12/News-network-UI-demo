@@ -53,4 +53,5 @@ export type QuizQuestion = {
 export type CbtQuestion = QuizQuestion & {
   id: string
   article: Article
+  entityId: string
 }

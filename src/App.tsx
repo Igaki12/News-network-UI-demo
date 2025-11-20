@@ -48,6 +48,7 @@ function App() {
   const [maxNodes, setMaxNodes] = useState(() => (typeof window !== 'undefined' && window.innerWidth <= 720 ? 20 : 40))
   const [isCbtMode, setCbtMode] = useState(false)
   const [cbtQuestions, setCbtQuestions] = useState<CbtQuestion[]>([])
+  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([])
 
   const hasData = availableDates.length > 0
   const currentDate = hasData && currentDateIndex >= 0 ? availableDates[currentDateIndex] : null
@@ -90,6 +91,7 @@ function App() {
     setArticleModalData(null)
     setCbtMode(false)
     setCbtQuestions([])
+    setSelectedNodeIds([])
     return true
   }, [])
 
@@ -148,12 +150,16 @@ function App() {
   )
 
   const handleNodeClick = useCallback(
-    (nodeId: string | null) => {
+    (nodeId: string | null, options?: { suppressModal?: boolean }) => {
       if (!nodeId) {
+        setSelectedNodeIds([])
         setDetails([])
-        setArticleModalData(null)
+        if (!options?.suppressModal) {
+          setArticleModalData(null)
+        }
         return
       }
+      setSelectedNodeIds([nodeId])
       const meta = nodeMeta[nodeId]
       const infoLine = meta ? `${nodeId}: 出現回数 ${fmt.format(meta.count)}` : nodeId
       const detailLines = [infoLine]
@@ -161,10 +167,14 @@ function App() {
 
       if (pool.length === 0) {
         detailLines.push('詳細な関連記事が見つかりませんでした。')
-        setArticleModalData(null)
+        if (!options?.suppressModal) {
+          setArticleModalData(null)
+        }
       } else {
-        const article = pickFeaturedArticle(pool) ?? pool[0]
-        setArticleModalData({ nodeId, article, related: pool })
+        if (!options?.suppressModal) {
+          const article = pickFeaturedArticle(pool) ?? pool[0]
+          setArticleModalData({ nodeId, article, related: pool })
+        }
       }
       setDetails(detailLines)
     },
@@ -217,36 +227,66 @@ function App() {
       window.alert('日付を選択してください。')
       return null
     }
-    const topEntities = Object.keys(nodeMeta)
-    if (topEntities.length === 0) {
+
+    const metaList = Object.values(nodeMeta)
+    if (metaList.length === 0) {
       window.alert('この日付ではグラフに表示できるエンティティがありません。')
       return null
     }
-    const entitySet = new Set(topEntities)
-    const articles = articlesByDate[currentDate] || []
-    const pool: CbtQuestion[] = []
-    articles.forEach((article, articleIndex) => {
-      const intersects = Array.isArray(article.named_entities) && article.named_entities.some((entity) => entitySet.has(entity))
-      if (!intersects) return
-      if (!Array.isArray(article.questions) || article.questions.length === 0) return
-      article.questions.forEach((rawQuestion, idx) => {
-        const normalized = normalizeMultipleChoiceQuestion(rawQuestion || undefined)
-        if (!normalized) return
-        pool.push({
-          id: `${article.news_item_id || article.headline || article.date_id}-${articleIndex}-${idx}`,
-          prompt: normalized.prompt,
-          choices: shuffleArray(normalized.choices),
-          correctText: normalized.correctText,
-          article,
-        })
+
+    const metasWithQuestions = metaList.filter((meta) =>
+      meta.articles.some((article) => Array.isArray(article.questions) && article.questions.length > 0),
+    )
+    if (metasWithQuestions.length === 0) {
+      window.alert('この日付では出題できる問題が見つかりませんでした。')
+      return null
+    }
+
+    const pickQuestionForEntity = (meta: NodeMeta) => {
+      const articlesWithQuestions = meta.articles.filter(
+        (article) => Array.isArray(article.questions) && article.questions.length > 0,
+      )
+      if (articlesWithQuestions.length === 0) return null
+      const prioritized = articlesWithQuestions.length > 5 ? articlesWithQuestions.slice(0, 5) : articlesWithQuestions
+      const articlePool = shuffleArray(prioritized)
+      for (const article of articlePool) {
+        const shuffledQuestions = shuffleArray(article.questions ?? [])
+        for (const rawQuestion of shuffledQuestions) {
+          const normalized = normalizeMultipleChoiceQuestion(rawQuestion || undefined)
+          if (normalized) {
+            return { article, normalized }
+          }
+        }
+      }
+      return null
+    }
+
+    const shuffledMetas = shuffleArray(metasWithQuestions)
+    const selected: CbtQuestion[] = []
+    let counter = 0
+    for (const meta of shuffledMetas) {
+      if (selected.length >= 10) break
+      const chosen = pickQuestionForEntity(meta)
+      if (!chosen) continue
+      const { article, normalized } = chosen
+      selected.push({
+        id: `cbt-${meta.id}-${counter}`,
+        prompt: normalized.prompt,
+        choices: shuffleArray(normalized.choices),
+        correctText: normalized.correctText,
+        article,
+        entityId: meta.id,
       })
-    })
-    if (pool.length < 10) {
+      counter += 1
+    }
+
+    if (selected.length < 10) {
       window.alert('この日付ではCBTに必要な10問を準備できません。')
       return null
     }
-    return shuffleArray(pool).slice(0, 10)
-  }, [articlesByDate, currentDate, nodeMeta])
+
+    return selected
+  }, [currentDate, nodeMeta])
 
   const handleStartCbt = useCallback(() => {
     const prepared = prepareCbtQuestions()
@@ -258,10 +298,29 @@ function App() {
     setCbtMode(true)
   }, [prepareCbtQuestions])
 
-  const handleExitCbt = useCallback(() => {
-    setCbtMode(false)
-    setCbtQuestions([])
-  }, [])
+  const handleExitCbt = useCallback(
+    (payload: { highlighted: string[]; glowing: string[] } | null) => {
+      setCbtMode(false)
+      setCbtQuestions([])
+      if (!payload) {
+        setSelectedNodeIds([])
+        return
+      }
+      const uniqueHighlighted = Array.from(new Set(payload.highlighted))
+      setSelectedNodeIds(uniqueHighlighted)
+      if (uniqueHighlighted.length > 0) {
+        setDetails([`CBTで出題された${uniqueHighlighted.length}件のノードをハイライトしています。`])
+      }
+      if (payload.glowing.length > 0) {
+        setCompletedNodes((prev) => {
+          const next = new Set(prev)
+          payload.glowing.forEach((id) => next.add(id))
+          return next
+        })
+      }
+    },
+    [],
+  )
 
   const handleRandomOpenArticle = () => {
     if (!randomState) return
@@ -297,7 +356,12 @@ function App() {
     <Box minH="100dvh">
       {!isCbtMode && (
         <>
-          <NetworkCanvas data={graphData} onNodeClick={handleNodeClick} completedNodes={completedNodes} />
+          <NetworkCanvas
+            data={graphData}
+            onNodeClick={handleNodeClick}
+            completedNodes={completedNodes}
+            selectedNodeIds={selectedNodeIds}
+          />
           <TopLeftPanel
             hasData={hasData}
             onFileSelected={handleFileSelected}
