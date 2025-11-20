@@ -8,12 +8,14 @@ type Props = {
   question: QuizQuestion | null
   onClose: () => void
   onOpenArticle: () => void
+  onResult?: (isCorrect: boolean) => void
 }
 
-export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle }: Props) => {
+export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle, onResult }: Props) => {
   const [choiceStatus, setChoiceStatus] = useState<Record<string, 'correct' | 'incorrect'>>({})
   const [feedback, setFeedback] = useState<string | null>(null)
   const [locked, setLocked] = useState(false)
+  const [reported, setReported] = useState(false)
 
   const shuffledChoices = useMemo(() => (question ? shuffleArray(question.choices) : []), [question])
 
@@ -22,6 +24,7 @@ export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle }: Pr
       setChoiceStatus({})
       setFeedback(null)
       setLocked(false)
+      setReported(false)
     }
   }, [isOpen, question])
 
@@ -39,6 +42,10 @@ export const RandomQuizModal = ({ isOpen, question, onClose, onOpenArticle }: Pr
       setFeedback('正解です！')
     } else {
       setFeedback(`正解は「${question.correctText}」です。`)
+    }
+    if (!reported && onResult) {
+      onResult(choice.isCorrect)
+      setReported(true)
     }
   }
 

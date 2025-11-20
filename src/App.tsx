@@ -27,6 +27,7 @@ type ArticleModalPayload = {
 type RandomState = {
   article: Article
   question: QuizQuestion
+  entityId: string
 }
 
 const fmt = new Intl.NumberFormat('ja-JP')
@@ -150,16 +151,20 @@ function App() {
   )
 
   const handleNodeClick = useCallback(
-    (nodeId: string | null, options?: { suppressModal?: boolean }) => {
+    (nodeId: string | null, options?: { suppressModal?: boolean; skipSelection?: boolean }) => {
       if (!nodeId) {
-        setSelectedNodeIds([])
+        if (!options?.skipSelection) {
+          setSelectedNodeIds([])
+        }
         setDetails([])
         if (!options?.suppressModal) {
           setArticleModalData(null)
         }
         return
       }
-      setSelectedNodeIds([nodeId])
+      if (!options?.skipSelection) {
+        setSelectedNodeIds([nodeId])
+      }
       const meta = nodeMeta[nodeId]
       const infoLine = meta ? `${nodeId}: 出現回数 ${fmt.format(meta.count)}` : nodeId
       const detailLines = [infoLine]
@@ -206,19 +211,40 @@ function App() {
       window.alert('日付を選択してください。')
       return
     }
-    const candidates = (articlesByDate[currentDate] || []).filter((article) => Array.isArray(article.questions) && article.questions.length > 0)
-    if (candidates.length === 0) {
+    const metas = Object.values(nodeMeta).filter((meta) =>
+      meta.articles.some((article) => Array.isArray(article.questions) && article.questions.length > 0),
+    )
+    if (metas.length === 0) {
       window.alert('この日付には出題できる問題がありません。')
       return
     }
-    const article = candidates[Math.floor(Math.random() * candidates.length)]
-    const rawQuestion = article.questions![Math.floor(Math.random() * article.questions!.length)]
-    const normalized = normalizeMultipleChoiceQuestion(rawQuestion || undefined)
-    if (!normalized) {
-      window.alert('この問題は選択肢を表示できません。別の問題をお試しください。')
+    const shuffledMetas = shuffleArray(metas)
+    let selection: { article: Article; normalized: QuizQuestion; entityId: string } | null = null
+    for (const meta of shuffledMetas) {
+      const articlesWithQuestions = meta.articles.filter((article) => Array.isArray(article.questions) && article.questions.length > 0)
+      if (articlesWithQuestions.length === 0) continue
+      const prioritized = articlesWithQuestions.length > 5 ? articlesWithQuestions.slice(0, 5) : articlesWithQuestions
+      const articlePool = shuffleArray(prioritized)
+      let found = false
+      for (const article of articlePool) {
+        const questionPool = shuffleArray(article.questions ?? [])
+        for (const rawQuestion of questionPool) {
+          const normalized = normalizeMultipleChoiceQuestion(rawQuestion || undefined)
+          if (normalized) {
+            selection = { article, normalized, entityId: meta.id }
+            found = true
+            break
+          }
+        }
+        if (found) break
+      }
+      if (selection) break
+    }
+    if (!selection) {
+      window.alert('この日付には出題できる問題がありません。')
       return
     }
-    setRandomState({ article, question: normalized })
+    setRandomState({ article: selection.article, question: selection.normalized, entityId: selection.entityId })
     setRandomModalOpen(true)
   }
 
@@ -348,6 +374,30 @@ function App() {
     setRandomModalOpen(false)
   }
 
+  const applyNodeGlow = useCallback((entityId: string) => {
+    setCompletedNodes((prev) => {
+      const next = new Set(prev)
+      next.add(entityId)
+      return next
+    })
+  }, [])
+
+  const handleRandomQuestionResult = useCallback(
+    (entityId: string | null, isCorrect: boolean) => {
+      if (!entityId) return
+      handleNodeClick(entityId, { suppressModal: true, skipSelection: true })
+      setSelectedNodeIds((prev) => {
+        const next = new Set(prev)
+        next.add(entityId)
+        return Array.from(next)
+      })
+      if (isCorrect) {
+        applyNodeGlow(entityId)
+      }
+    },
+    [applyNodeGlow, handleNodeClick],
+  )
+
   const articleModalNodeId = articleModalData?.nodeId ?? null
   const articleModalArticle = articleModalData?.article ?? null
   const articleModalRelated = articleModalData?.related ?? []
@@ -392,6 +442,7 @@ function App() {
               closeRandomModal()
               handleRandomOpenArticle()
             }}
+            onResult={(result) => handleRandomQuestionResult(randomState?.entityId ?? null, result)}
           />
         </>
       )}
