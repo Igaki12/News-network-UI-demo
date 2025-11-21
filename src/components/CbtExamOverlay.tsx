@@ -339,7 +339,11 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
                 const truncatedContent = articleContent.length > 160 ? `${articleContent.slice(0, 160)}…` : articleContent
                 return (
                   <Box key={question.id} borderRadius="16px" padding="18px" background="rgba(255,255,255,0.88)" boxShadow="inset 0 0 0 1px rgba(148,163,184,0.16)">
-
+                    <Flex justifyContent="space-between" alignItems="center" marginBottom="10px" flexWrap="wrap" gap="8px">
+                      <Text fontWeight="bold">
+                        Q{index + 1}. {question.prompt}
+                      </Text>
+                    </Flex>
                     <Box marginBottom="12px" display="grid" gap="6px">
                       <Box margin="0" display="flex" alignItems="center" gap="8px">
                         <Text fontSize="sm" color="var(--muted)">
@@ -358,11 +362,6 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
                         </Text>
                       )}
                     </Box>
-                    <Flex justifyContent="space-between" alignItems="center" marginBottom="10px" flexWrap="wrap" gap="8px">
-                      <Text fontWeight="bold">
-                        Q{index + 1}. {question.prompt}
-                      </Text>
-                    </Flex>
                     <Box display="flex" flexDirection="column" gap="12px">
                       {distribution.map((choice) => (
                         <Box key={choice.choiceId}>
