@@ -110,7 +110,7 @@ export const TopLeftPanel = ({
             onClick={onRandomQuestion}
             isDisabled={isLoading}
           >
-            ランダムで問題を出題する
+            ランダムで１問解く
           </Button>
           <Spacer />
           <Button
