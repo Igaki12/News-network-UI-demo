@@ -226,13 +226,17 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
       backdropFilter="blur(6px)"
       zIndex={90}
       display="flex"
-      alignItems="center"
+      alignItems="flex-start"
       justifyContent="center"
       padding="18px"
-      pb="30px"
       overflowY="auto"
     >
-      <Box className="hud-card" width="min(960px, 96vw)" padding={{ base: '20px', md: '32px' }}>
+      <Box
+        className="hud-card"
+        width="min(960px, 96vw)"
+        padding={{ base: '20px', md: '32px' }}
+        my={{ base: '40px', md: 'auto' }}
+      >
         {phase === 'exam' && currentQuestion && (
           <Box>
             <Heading as="h2" size="lg" marginBottom="8px">
@@ -330,7 +334,7 @@ export const CbtExamOverlay = ({ questions, onExit, currentDateLabel }: Props) =
                 <Heading size="md">{result.estimatedDeviation}</Heading>
               </Box>
             </SimpleGrid>
-            <Box display="flex" flexDirection="column" gap="20px" maxHeight="55vh" overflowY="auto" paddingRight="4px">
+            <Box display="flex" flexDirection="column" gap="20px" paddingRight="4px">
               {questions.map((question, index) => {
                 const distribution = result.distributions[question.id] ?? []
                 // const selected = answers[question.id]?.choiceId ?? null

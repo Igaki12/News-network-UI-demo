@@ -46,23 +46,13 @@ function App() {
   const [randomState, setRandomState] = useState<RandomState | null>(null)
   const [isRandomModalOpen, setRandomModalOpen] = useState(false)
   const [isLoadingData, setIsLoadingData] = useState(false)
-  const [maxNodes, setMaxNodes] = useState(() => (typeof window !== 'undefined' && window.innerWidth <= 720 ? 20 : 40))
+  const [maxNodes] = useState(40)
   const [isCbtMode, setCbtMode] = useState(false)
   const [cbtQuestions, setCbtQuestions] = useState<CbtQuestion[]>([])
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([])
 
   const hasData = availableDates.length > 0
   const currentDate = hasData && currentDateIndex >= 0 ? availableDates[currentDateIndex] : null
-
-  useEffect(() => {
-    const handleResize = () => {
-      const nextCap = window.innerWidth <= 720 ? 20 : 40
-      setMaxNodes(nextCap)
-    }
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
 
   useEffect(() => {
     if (!currentDate) {
