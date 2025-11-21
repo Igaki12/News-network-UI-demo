@@ -15,7 +15,7 @@ export const NodeDetailsCard = ({ isVisible, details, placeholder, hasGlowingNod
     left={{ base: "8px", md: "16px" }}
   >
     <Box id="infoBox">
-      <Text as="h2">{hasGlowingNodes ? '次のステップ：' : '詳細'}</Text>
+      {/* <Text as="h2">{hasGlowingNodes ? '次のステップ：' : '詳細'}</Text> */}
       {details.length === 0 && (
         <Text id="info-placeholder" className="muted">
           {placeholder || (hasGlowingNodes ? '光っているノードを増やしてあなたの知識を広げましょう！' : '気になるノードをクリックしたり、引っ張ったりしてみてください')}
