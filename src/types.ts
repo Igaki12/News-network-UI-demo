@@ -55,3 +55,26 @@ export type CbtQuestion = QuizQuestion & {
   article: Article
   entityId: string
 }
+
+export type AuthGroup = {
+  id: number
+  name: string
+  groupType: string
+}
+
+export type AuthUser = {
+  email: string
+  displayName: string
+  groupId: number
+  roleInGroup: string
+}
+
+export type DemoAccount = AuthUser & {
+  password: string
+}
+
+export type AuthResult = {
+  success: boolean
+  message?: string
+  user?: AuthUser
+}

@@ -1,6 +1,6 @@
 import { Box } from '@chakra-ui/react'
 import { useCallback, useEffect, useState } from 'react'
-import type { Article, CbtQuestion, GraphPayload, NodeMeta, QuizQuestion } from './types'
+import type { Article, AuthResult, AuthUser, CbtQuestion, DemoAccount, GraphPayload, NodeMeta, QuizQuestion } from './types'
 import {
   buildGraphPayload,
   formatDateId,
@@ -10,6 +10,9 @@ import {
   pickFeaturedArticle,
   shuffleArray,
 } from './utils/data'
+import { AUTH_GROUPS, SAMPLE_ACCOUNTS } from './data/auth'
+import { AuthLanding } from './components/AuthLanding'
+import { AuthModal } from './components/AuthModal'
 import { ArticleModal } from './components/ArticleModal'
 import { CbtExamOverlay } from './components/CbtExamOverlay'
 import { FooterBadge } from './components/FooterBadge'
@@ -17,6 +20,7 @@ import { NetworkCanvas } from './components/NetworkCanvas'
 import { NodeDetailsCard } from './components/NodeDetailsCard'
 import { RandomQuizModal } from './components/RandomQuizModal'
 import { TopLeftPanel } from './components/TopLeftPanel'
+import { UserProfileButton } from './components/UserProfileButton'
 
 type ArticleModalPayload = {
   nodeId: string
@@ -32,8 +36,10 @@ type RandomState = {
 
 const fmt = new Intl.NumberFormat('ja-JP')
 const SAMPLE_FILE_PATH = `${import.meta.env.BASE_URL}news_full_mcq3_type9_entities_novectors.jsonl`
-
+const FALLBACK_GROUP_ID = AUTH_GROUPS[0]?.id ?? 1
 function App() {
+  const [knownUsers, setKnownUsers] = useState<DemoAccount[]>(SAMPLE_ACCOUNTS)
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const [allArticles, setAllArticles] = useState<Article[]>([])
   const [articlesByDate, setArticlesByDate] = useState<Record<string, Article[]>>({})
   const [availableDates, setAvailableDates] = useState<string[]>([])
@@ -50,6 +56,10 @@ function App() {
   const [isCbtMode, setCbtMode] = useState(false)
   const [cbtQuestions, setCbtQuestions] = useState<CbtQuestion[]>([])
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([])
+  const [isAuthModalOpen, setAuthModalOpen] = useState(false)
+  const [authMode, setAuthMode] = useState<'signIn' | 'signUp'>('signIn')
+
+  const isAuthenticated = Boolean(currentUser)
 
   const hasData = availableDates.length > 0
   const currentDate = hasData && currentDateIndex >= 0 ? availableDates[currentDateIndex] : null
@@ -84,6 +94,23 @@ function App() {
     setCbtQuestions([])
     setSelectedNodeIds([])
     return true
+  }, [])
+
+  const resetWorkspace = useCallback(() => {
+    setAllArticles([])
+    setArticlesByDate({})
+    setAvailableDates([])
+    setCurrentDateIndex(-1)
+    setGraphData(null)
+    setNodeMeta({})
+    setDetails([])
+    setArticleModalData(null)
+    setCompletedNodes(new Set())
+    setRandomState(null)
+    setRandomModalOpen(false)
+    setCbtMode(false)
+    setCbtQuestions([])
+    setSelectedNodeIds([])
   }, [])
 
   const loadArticlesFromText = useCallback(
@@ -372,6 +399,90 @@ function App() {
     })
   }, [])
 
+  const toAuthUser = useCallback((account: DemoAccount): AuthUser => {
+    const { email, displayName, groupId, roleInGroup } = account
+    return { email, displayName, groupId, roleInGroup }
+  }, [])
+
+  const handleSignIn = useCallback(
+    async ({ email, password }: { email: string; password: string }): Promise<AuthResult> => {
+      const normalizedEmail = email.trim().toLowerCase()
+      if (!normalizedEmail) {
+        return { success: false, message: 'メールアドレスを入力してください。' }
+      }
+      const match = knownUsers.find((user) => user.email.toLowerCase() === normalizedEmail)
+      if (match) {
+        const user = toAuthUser(match)
+        setCurrentUser(user)
+        return { success: true, user }
+      }
+      // ダミー環境なので、未登録でも即座に通過させ既定グループへ仮配属する
+      const inferredName = normalizedEmail.split('@')[0] || 'Guest User'
+      const newAccount: DemoAccount = {
+        email: normalizedEmail,
+        password,
+        displayName: inferredName,
+        groupId: FALLBACK_GROUP_ID,
+        roleInGroup: 'member',
+      }
+      setKnownUsers((prev) => [...prev, newAccount])
+      const user = toAuthUser(newAccount)
+      setCurrentUser(user)
+      return { success: true, user }
+    },
+    [knownUsers, toAuthUser],
+  )
+
+  const handleSignUp = useCallback(
+    async (payload: {
+      displayName: string
+      email: string
+      password: string
+      groupId: number
+      roleInGroup: string
+      verificationCode?: string
+    }): Promise<AuthResult> => {
+      const normalizedEmail = payload.email.trim().toLowerCase()
+      if (!normalizedEmail) {
+        return { success: false, message: 'メールアドレスを入力してください。' }
+      }
+      if (!payload.displayName) {
+        return { success: false, message: '表示名を入力してください。' }
+      }
+      const exists = knownUsers.some((user) => user.email.toLowerCase() === normalizedEmail)
+      if (exists) {
+        return { success: false, message: 'すでに登録済みのメールアドレスです。' }
+      }
+      const newAccount: DemoAccount = {
+        email: normalizedEmail,
+        password: payload.password,
+        displayName: payload.displayName,
+        groupId: payload.groupId,
+        roleInGroup: payload.roleInGroup,
+      }
+      setKnownUsers((prev) => [...prev, newAccount])
+      const user = toAuthUser(newAccount)
+      setCurrentUser(user)
+      return { success: true, user }
+    },
+    [knownUsers, toAuthUser],
+  )
+
+  const openSignIn = () => {
+    setAuthMode('signIn')
+    setAuthModalOpen(true)
+  }
+
+  const openSignUp = () => {
+    setAuthMode('signUp')
+    setAuthModalOpen(true)
+  }
+
+  const handleLogout = useCallback(() => {
+    resetWorkspace()
+    setCurrentUser(null)
+  }, [resetWorkspace])
+
   const handleRandomQuestionResult = useCallback(
     (entityId: string | null, isCorrect: boolean) => {
       if (!entityId) return
@@ -402,7 +513,7 @@ function App() {
 
   return (
     <Box minH="100dvh">
-      {!isCbtMode && (
+      {isAuthenticated && !isCbtMode && (
         <>
           <NetworkCanvas
             data={graphData}
@@ -432,28 +543,45 @@ function App() {
             onClose={() => setArticleModalData(null)}
             onQuizSuccess={handleQuizSuccess}
           />
-      <RandomQuizModal
-        isOpen={isRandomModalOpen}
-        question={randomState?.question ?? null}
-        onClose={closeRandomModal}
-        onOpenArticle={() => {
-          closeRandomModal()
-          handleRandomOpenArticle()
-        }}
-        onResult={(result) => handleRandomQuestionResult(randomState?.entityId ?? null, result)}
-        currentDateLabel={randomDateLabel}
-        headline={randomHeadline}
-      />
+          <RandomQuizModal
+            isOpen={isRandomModalOpen}
+            question={randomState?.question ?? null}
+            onClose={closeRandomModal}
+            onOpenArticle={() => {
+              closeRandomModal()
+              handleRandomOpenArticle()
+            }}
+            onResult={(result) => handleRandomQuestionResult(randomState?.entityId ?? null, result)}
+            currentDateLabel={randomDateLabel}
+            headline={randomHeadline}
+          />
         </>
       )}
-      {isCbtMode && cbtQuestions.length > 0 && (
+      {isAuthenticated && isCbtMode && cbtQuestions.length > 0 && (
         <CbtExamOverlay
           questions={cbtQuestions}
           onExit={handleExitCbt}
           currentDateLabel={currentDate ? formatDateId(currentDate) : 'YYYY-MM-DD'}
         />
       )}
-      <FooterBadge hasData={hasData} />
+      <FooterBadge hasData={isAuthenticated && hasData} />
+      {!isAuthenticated && <AuthLanding onSignInClick={openSignIn} onSignUpClick={openSignUp} />}
+      <AuthModal
+        mode={authMode}
+        isOpen={isAuthModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onModeChange={setAuthMode}
+        onSignIn={handleSignIn}
+        onSignUp={(payload) => handleSignUp(payload)}
+        groups={AUTH_GROUPS}
+      />
+      {isAuthenticated && currentUser && (
+        <UserProfileButton
+          user={currentUser}
+          groupName={AUTH_GROUPS.find((group) => group.id === currentUser.groupId)?.name}
+          onLogout={handleLogout}
+        />
+      )}
     </Box>
   )
 }
