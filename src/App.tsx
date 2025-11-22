@@ -1,5 +1,5 @@
 import { Box } from '@chakra-ui/react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Article, AuthResult, AuthUser, CbtQuestion, DemoAccount, GraphPayload, NodeMeta, QuizQuestion } from './types'
 import {
   buildGraphPayload,
@@ -63,6 +63,14 @@ function App() {
 
   const hasData = availableDates.length > 0
   const currentDate = hasData && currentDateIndex >= 0 ? availableDates[currentDateIndex] : null
+
+  const dateIndexMap = useMemo(() => {
+    const map = new Map<string, number>()
+    availableDates.forEach((date, index) => {
+      map.set(date, index)
+    })
+    return map
+  }, [availableDates])
 
   useEffect(() => {
     if (!currentDate) {
@@ -214,6 +222,17 @@ function App() {
     setArticleModalData(null)
     setCurrentDateIndex((idx) => Math.min(availableDates.length - 1, idx + 1))
   }
+
+  const handleSelectDate = useCallback(
+    (dateId: string) => {
+      const targetIndex = dateIndexMap.get(dateId)
+      if (typeof targetIndex !== 'number') return
+      setDetails([])
+      setArticleModalData(null)
+      setCurrentDateIndex(targetIndex)
+    },
+    [dateIndexMap],
+  )
 
   const handleQuizSuccess = (nodeId: string) => {
     setCompletedNodes((prev) => {
@@ -527,12 +546,15 @@ function App() {
             currentDateDisplay={currentDate ? formatDateId(currentDate) : 'YYYY-MM-DD'}
             onPrevDate={handlePrevDate}
             onNextDate={handleNextDate}
+            onSelectDate={handleSelectDate}
             disablePrev={!hasData || currentDateIndex === 0}
             disableNext={!hasData || currentDateIndex === availableDates.length - 1}
             onRandomQuestion={handleRandomQuestion}
             onUseProvidedFile={handleUseProvidedFile}
             isLoading={isLoadingData}
             onStartCbt={handleStartCbt}
+            availableDates={availableDates}
+            currentDateId={currentDate}
           />
           <NodeDetailsCard isVisible={hasData} details={details} hasGlowingNodes={completedNodes.size > 0} />
           <ArticleModal
